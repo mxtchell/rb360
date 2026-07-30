@@ -1,0 +1,585 @@
+<style>
+  :root{
+    --brand-primary:#E40046;
+    --brand-dark:#C3003D;
+    --brand-accent:#FF1493;
+    --brand-gradient:linear-gradient(135deg, #1a1a2e 0%, #2d1f3d 50%, #3d1f4a 100%);
+    --white:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --glass: rgba(255,255,255,0.08);
+    --glass-2: rgba(255,255,255,0.12);
+    --glass-light: rgba(255,255,255,0.95);
+    --stroke: rgba(255,255,255,0.12);
+    --shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    --shadow-light: 0 10px 40px rgba(0,0,0,0.08);
+  }
+
+  *{ box-sizing:border-box; }
+
+  .rsc-page{
+    margin:0;
+    font-family: Inter, "Helvetica Neue","Segoe UI",Arial,sans-serif;
+    background: var(--brand-gradient);
+    min-height:100vh;
+  }
+
+  .rsc-hero{
+    text-align:center;
+    padding:32px 20px 28px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .rsc-hero::before{
+    content:"";
+    position:absolute;
+    top:-50%;
+    left:-50%;
+    width:200%;
+    height:200%;
+    background: radial-gradient(circle at 30% 20%, rgba(228,0,70,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(255,20,147,0.15) 0%, transparent 50%);
+    animation: pulse 15s ease-in-out infinite;
+    z-index:0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
+  }
+
+  .rsc-hero-top{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+    position:relative;
+    z-index:1;
+  }
+
+  .rsc-logo-img{
+    height:40px;
+    width:auto;
+  }
+
+  .rsc-hero h1{
+    margin:0;
+    font-size:38px;
+    line-height:1.1;
+    letter-spacing:-0.03em;
+    color:var(--white);
+    font-weight:900;
+    position:relative;
+    z-index:1;
+  }
+
+  .rsc-hero h1 .highlight{
+    color:var(--brand-primary);
+  }
+
+  .rsc-hero p{
+    margin:14px auto 0;
+    max-width:800px;
+    color:rgba(255,255,255,0.75);
+    font-size:16px;
+    line-height:1.6;
+    font-weight:500;
+    position:relative;
+    z-index:1;
+  }
+
+  .rsc-content{
+    position:relative;
+    padding:0 20px 40px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .rsc-wrap{
+    position:relative;
+    z-index:1;
+    width:1200px;
+    max-width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+  }
+
+  .rsc-section-label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:6px;
+  }
+
+  .rsc-section-label span{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.5);
+  }
+
+  .rsc-section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  }
+
+  .rsc-topics{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:20px;
+  }
+
+  .rsc-topic{
+    background: var(--glass);
+    border:1px solid var(--stroke);
+    border-radius:24px;
+    padding:28px 24px;
+    cursor:pointer;
+    transition: all .3s ease;
+    position:relative;
+    overflow:hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .rsc-topic::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:3px;
+    background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+    opacity:0;
+    transition: opacity .3s ease;
+  }
+
+  .rsc-topic:hover{
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    background: var(--glass-2);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .rsc-topic:hover::before{
+    opacity:1;
+  }
+
+  .rsc-topic-header{
+    display:flex;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:16px;
+  }
+
+  .rsc-topic-icon{
+    width:56px;
+    height:56px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    font-weight:800;
+    flex-shrink:0;
+    color:var(--white);
+  }
+
+  .rsc-topic-icon.share{
+    background: linear-gradient(135deg, rgba(228,0,70,0.3) 0%, rgba(255,20,147,0.3) 100%);
+    border:1px solid rgba(228,0,70,0.4);
+  }
+
+  .rsc-topic-icon.drivers{
+    background: linear-gradient(135deg, rgba(34,197,94,0.3) 0%, rgba(16,185,129,0.3) 100%);
+    border:1px solid rgba(34,197,94,0.4);
+  }
+
+  .rsc-topic-icon.trends{
+    background: linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(168,85,247,0.3) 100%);
+    border:1px solid rgba(99,102,241,0.4);
+  }
+
+  .rsc-topic-title{
+    margin:0 0 6px 0;
+    font-size:20px;
+    font-weight:800;
+    color:var(--white);
+    letter-spacing:-0.02em;
+  }
+
+  .rsc-topic-subtitle{
+    margin:0;
+    font-size:13px;
+    color:rgba(255,255,255,0.5);
+    font-weight:600;
+  }
+
+  .rsc-topic-desc{
+    margin:0 0 20px 0;
+    font-size:14px;
+    line-height:1.65;
+    color:rgba(255,255,255,0.7);
+  }
+
+  .rsc-topic-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:20px;
+  }
+
+  .rsc-tag{
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  .rsc-tag.pink{ background:rgba(228,0,70,0.2); color:#ff6b9d; }
+  .rsc-tag.green{ background:rgba(34,197,94,0.2); color:#86efac; }
+  .rsc-tag.blue{ background:rgba(99,102,241,0.2); color:#a5b4fc; }
+  .rsc-tag.orange{ background:rgba(251,146,60,0.2); color:#fdba74; }
+
+  .rsc-cta{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--brand-primary);
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    transition: gap .2s ease;
+  }
+
+  .rsc-topic:hover .rsc-cta{
+    gap:12px;
+    color:#ff6b9d;
+  }
+
+  .rsc-data{
+    background: var(--glass-light);
+    border-radius:24px;
+    box-shadow: var(--shadow-light);
+    padding:28px;
+    margin-top:8px;
+  }
+
+  .rsc-data-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:20px;
+    padding-bottom:16px;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+  }
+
+  .rsc-data-header h2{
+    margin:0;
+    font-size:22px;
+    font-weight:900;
+    color:var(--ink);
+    letter-spacing:-0.02em;
+  }
+
+  .rsc-data-header p{
+    margin:0;
+    font-size:13px;
+    color:var(--muted);
+    font-weight:600;
+  }
+
+  .rsc-datasets{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:16px;
+  }
+
+  .rsc-dataset{
+    background:#fafafa;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:16px;
+    padding:20px;
+    transition: all .2s ease;
+  }
+
+  .rsc-dataset:hover{
+    border-color:rgba(228,0,70,0.3);
+    box-shadow: 0 4px 20px rgba(228,0,70,0.08);
+  }
+
+  .rsc-dataset-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .rsc-dataset-icon{
+    width:40px;
+    height:40px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:800;
+    color:var(--white);
+  }
+
+  .rsc-dataset-icon.finance{ background:linear-gradient(135deg, #E40046 0%, #ff1493 100%); }
+  .rsc-dataset-icon.panel{ background:linear-gradient(135deg, #22c55e 0%, #10b981 100%); }
+  .rsc-dataset-icon.nielsen{ background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+
+  .rsc-dataset-name{
+    margin:0;
+    font-size:15px;
+    font-weight:800;
+    color:var(--ink);
+  }
+
+  .rsc-dataset-sub{
+    margin:2px 0 0 0;
+    font-size:11px;
+    color:var(--muted);
+    font-weight:600;
+  }
+
+  .rsc-metric-section{
+    margin-bottom:12px;
+  }
+
+  .rsc-metric-section:last-child{
+    margin-bottom:0;
+  }
+
+  .rsc-metric-label{
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+
+  .rsc-metric-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+  }
+
+  .rsc-metric-pill{
+    padding:3px 8px;
+    border-radius:5px;
+    font-size:10px;
+    font-weight:700;
+    background:rgba(0,0,0,0.04);
+    color:#374151;
+  }
+
+  .rsc-footer{
+    text-align:center;
+    padding:24px 20px 32px;
+  }
+
+  .rsc-footer img{
+    height:28px;
+    opacity:0.6;
+  }
+
+  @media (max-width:1000px){
+    .rsc-topics{ grid-template-columns:1fr; }
+    .rsc-datasets{ grid-template-columns:1fr; }
+  }
+
+  @media (max-width:640px){
+    .rsc-hero h1{ font-size:28px; }
+    .rsc-topic{ padding:20px; }
+  }
+</style>
+
+<script>
+  function rscAsk(question){
+    window.parent.postMessage({ askQuestion: question }, '*');
+  }
+</script>
+
+<div class="rsc-page">
+  <div class="rsc-hero">
+    <div class="rsc-hero-top">
+      <img class="rsc-logo-img" src="https://info.answerrocket.com/hubfs/poc/reckit_long.png" alt="Reckitt" />
+    </div>
+    <h1>Surface Care <span class="highlight">Intelligence</span></h1>
+    <p>Analyze Lysol market performance, understand revenue drivers, and track household penetration across the US Surface Care category.</p>
+  </div>
+
+  <div class="rsc-content">
+    <div class="rsc-wrap">
+
+      <div class="rsc-section-label"><span>Analytics Tools</span></div>
+
+      <div class="rsc-topics">
+
+        <div class="rsc-topic" onclick="rscAsk('Is Lysol gaining or losing share in Surface Care? Against which competitors?')">
+          <div class="rsc-topic-header">
+            <div class="rsc-topic-icon share">MSA</div>
+            <div>
+              <h2 class="rsc-topic-title">Market Share Analysis</h2>
+              <p class="rsc-topic-subtitle">Competitive positioning</p>
+            </div>
+          </div>
+          <p class="rsc-topic-desc">Track Lysol market share trends and competitive dynamics in Surface Care. Identify which competitors are gaining or losing ground by segment and retailer.</p>
+          <div class="rsc-topic-tags">
+            <span class="rsc-tag pink">Value Share</span>
+            <span class="rsc-tag green">Volume Share</span>
+          </div>
+          <div class="rsc-cta">Analyze Share &rarr;</div>
+        </div>
+
+        <div class="rsc-topic" onclick="rscAsk('What is driving Net Revenue performance for Lysol this period vs last year?')">
+          <div class="rsc-topic-header">
+            <div class="rsc-topic-icon drivers">DRV</div>
+            <div>
+              <h2 class="rsc-topic-title">Revenue Drivers</h2>
+              <p class="rsc-topic-subtitle">Variance analysis</p>
+            </div>
+          </div>
+          <p class="rsc-topic-desc">Understand what is driving revenue and margin changes. Break down performance by category, segment, and brand to identify growth contributors and detractors.</p>
+          <div class="rsc-topic-tags">
+            <span class="rsc-tag green">Net Revenue</span>
+            <span class="rsc-tag orange">Gross Margin</span>
+          </div>
+          <div class="rsc-cta">Analyze Drivers &rarr;</div>
+        </div>
+
+        <div class="rsc-topic" onclick="rscAsk('Show me household penetration trend for Lysol over the past year.')">
+          <div class="rsc-topic-header">
+            <div class="rsc-topic-icon trends">TRD</div>
+            <div>
+              <h2 class="rsc-topic-title">Penetration Trends</h2>
+              <p class="rsc-topic-subtitle">Panel data analysis</p>
+            </div>
+          </div>
+          <p class="rsc-topic-desc">Monitor household penetration and repeat purchase behavior over time. Compare Lysol reach against category and key competitors.</p>
+          <div class="rsc-topic-tags">
+            <span class="rsc-tag blue">Penetration %</span>
+            <span class="rsc-tag pink">Repeat Rate</span>
+          </div>
+          <div class="rsc-cta">View Trends &rarr;</div>
+        </div>
+
+      </div>
+
+      <div class="rsc-data">
+        <div class="rsc-data-header">
+          <div>
+            <h2>Data Sources</h2>
+            <p>Lysol US Surface Care - Nielsen xAoC, Panel, Internal Finance</p>
+          </div>
+        </div>
+
+        <div class="rsc-datasets">
+
+          <div class="rsc-dataset">
+            <div class="rsc-dataset-header">
+              <div class="rsc-dataset-icon finance">P&L</div>
+              <div>
+                <h3 class="rsc-dataset-name">Finance Data</h3>
+                <p class="rsc-dataset-sub">Internal P&L extract</p>
+              </div>
+            </div>
+            <div class="rsc-metric-section">
+              <div class="rsc-metric-label">Metrics</div>
+              <div class="rsc-metric-list">
+                <span class="rsc-metric-pill">gross_sales</span>
+                <span class="rsc-metric-pill">net_revenue</span>
+                <span class="rsc-metric-pill">gross_margin</span>
+              </div>
+            </div>
+            <div class="rsc-metric-section">
+              <div class="rsc-metric-label">Dimensions</div>
+              <div class="rsc-metric-list">
+                <span class="rsc-metric-pill">power_brand</span>
+                <span class="rsc-metric-pill">category</span>
+                <span class="rsc-metric-pill">sub_category</span>
+                <span class="rsc-metric-pill">segment</span>
+                <span class="rsc-metric-pill">fiscal_period</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rsc-dataset">
+            <div class="rsc-dataset-header">
+              <div class="rsc-dataset-icon panel">HH</div>
+              <div>
+                <h3 class="rsc-dataset-name">Panel Data</h3>
+                <p class="rsc-dataset-sub">Household panel metrics</p>
+              </div>
+            </div>
+            <div class="rsc-metric-section">
+              <div class="rsc-metric-label">Metrics</div>
+              <div class="rsc-metric-list">
+                <span class="rsc-metric-pill">household_penetration</span>
+                <span class="rsc-metric-pill">repeat_rate</span>
+                <span class="rsc-metric-pill">buy_rate</span>
+              </div>
+            </div>
+            <div class="rsc-metric-section">
+              <div class="rsc-metric-label">Dimensions</div>
+              <div class="rsc-metric-list">
+                <span class="rsc-metric-pill">parent_brand</span>
+                <span class="rsc-metric-pill">category</span>
+                <span class="rsc-metric-pill">brand</span>
+                <span class="rsc-metric-pill">channel</span>
+                <span class="rsc-metric-pill">quarter</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rsc-dataset">
+            <div class="rsc-dataset-header">
+              <div class="rsc-dataset-icon nielsen">xAoC</div>
+              <div>
+                <h3 class="rsc-dataset-name">Nielsen Syndicated</h3>
+                <p class="rsc-dataset-sub">xAoC star schema</p>
+              </div>
+            </div>
+            <div class="rsc-metric-section">
+              <div class="rsc-metric-label">Metrics</div>
+              <div class="rsc-metric-list">
+                <span class="rsc-metric-pill">value_sales</span>
+                <span class="rsc-metric-pill">unit_sales</span>
+                <span class="rsc-metric-pill">volume_sales</span>
+                <span class="rsc-metric-pill">acv</span>
+                <span class="rsc-metric-pill">tdp</span>
+              </div>
+            </div>
+            <div class="rsc-metric-section">
+              <div class="rsc-metric-label">Dimensions</div>
+              <div class="rsc-metric-list">
+                <span class="rsc-metric-pill">brand</span>
+                <span class="rsc-metric-pill">segment</span>
+                <span class="rsc-metric-pill">retailer</span>
+                <span class="rsc-metric-pill">channel</span>
+                <span class="rsc-metric-pill">week</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="rsc-footer">
+    <img src="https://info.answerrocket.com/hubfs/Image/AR_logo_horiz-white.svg" alt="AnswerRocket" />
+  </div>
+</div>
