@@ -273,7 +273,7 @@ class FinanceDriversAnalysis:
     """Finance Drivers Analysis - Revenue-to-Margin Walkdown"""
 
     def __init__(self, client, period, comparison_type, breakout_dimensions=None,
-                 top_n=10, other_filters=None, table_name=None):
+                 top_n=10, other_filters=None, table_name=None, breakout_metric='gross_margin_act'):
         self.client = client
         self.period = period
         self.comparison_type = comparison_type  # 'Y/Y' or 'P/P'
@@ -281,6 +281,7 @@ class FinanceDriversAnalysis:
         self.top_n = top_n
         self.other_filters = other_filters or []
         self.table_name = table_name
+        self.breakout_metric = breakout_metric  # Metric to use for dimensional breakouts
 
         self.current_df = None
         self.prior_df = None
@@ -592,7 +593,7 @@ class FinanceDriversAnalysis:
             }
         }
 
-    def create_bar_chart_data(self, dimension):
+    def create_bar_chart_data(self, dimension, metric_display='Gross Margin'):
         """Create horizontal bar chart for dimension breakout"""
         if dimension not in self.breakout_results:
             return None
@@ -614,7 +615,7 @@ class FinanceDriversAnalysis:
                 }
             ],
             'chart_y_axis': {
-                'title': {'text': 'Gross Margin ($M)'},
+                'title': {'text': f'{metric_display} ($M)'},
                 'labels': {'format': '${value:,.1f}M'}
             }
         }
@@ -658,7 +659,7 @@ class FinanceDriversAnalysis:
 
         return {'data': data, 'col_defs': columns}
 
-    def get_breakout_table(self, dimension):
+    def get_breakout_table(self, dimension, metric_display='Gross Margin'):
         """Create table for dimension breakout"""
         if dimension not in self.breakout_results:
             return None
@@ -678,8 +679,8 @@ class FinanceDriversAnalysis:
         comparison_label = 'Prior Year' if self.comparison_type == 'Y/Y' else 'Prior Period'
         columns = [
             {'name': format_display_name(dimension)},
-            {'name': 'Current'},
-            {'name': comparison_label},
+            {'name': f'Current {metric_display}'},
+            {'name': f'{comparison_label} {metric_display}'},
             {'name': 'Variance'},
             {'name': 'Var %'}
         ]
@@ -694,7 +695,7 @@ class FinanceDriversAnalysis:
         self.calculate_walkdown()
 
         for dim in self.breakout_dimensions:
-            self.calculate_dimensional_breakout(dim)
+            self.calculate_dimensional_breakout(dim, metric=self.breakout_metric)
 
         logger.info("Analysis complete")
         return self
@@ -703,12 +704,19 @@ class FinanceDriversAnalysis:
 @skill(
     name="Finance Drivers",
     llm_name="Finance Drivers - Revenue to Margin Walkdown",
-    description="Analyze finance drivers showing the Revenue-to-Margin walkdown (Gross Sales -> Trade Deductions -> Net Revenue -> COGS -> Gross Margin) with Y/Y or P/P comparison and dimensional breakouts.",
-    capabilities="Revenue-to-margin walkdown analysis. Y/Y and P/P comparisons. Dimensional breakouts by brand, category, segment, country.",
+    description="Analyze finance drivers showing the Revenue-to-Margin walkdown (Gross Sales -> Trade Deductions -> Net Revenue -> COGS -> Gross Margin) with Y/Y or P/P comparison and dimensional breakouts by the selected metric.",
+    capabilities="Revenue-to-margin walkdown analysis. Y/Y and P/P comparisons. Dimensional breakouts by brand, category, segment, country. User can select which metric to analyze in breakouts.",
     limitations="Requires gross_sales_act, net_revenue_act, gross_margin_act columns.",
-    example_questions="What are the margin drivers for Q1 2026? Show finance drivers by brand. Analyze gross margin variance vs prior year.",
-    parameter_guidance="Select a period and comparison type (Y/Y or P/P). Optionally select dimensions for breakout analysis.",
+    example_questions="What are the margin drivers for Q1 2026? Show net revenue drivers by brand. Analyze gross sales variance vs prior year.",
+    parameter_guidance="Select a metric for breakout analysis, a period, and comparison type (Y/Y or P/P). The walkdown always shows the full P&L context, but breakout tabs use your selected metric.",
     parameters=[
+        SkillParameter(
+            name="metric",
+            constrained_to=None,
+            constrained_values=["gross_margin_act", "net_revenue_act", "gross_sales_act"],
+            description="Metric to analyze in dimensional breakouts: Gross Margin, Net Revenue, or Gross Sales",
+            default_value="gross_margin_act"
+        ),
         SkillParameter(
             name="period",
             constrained_to="date_filter",
@@ -765,6 +773,7 @@ def finance_drivers(parameters: SkillInput):
     logger.info(f"Skill received parameters: {parameters.arguments}")
 
     # Extract parameters
+    metric = getattr(parameters.arguments, 'metric', 'gross_margin_act') or 'gross_margin_act'
     period = getattr(parameters.arguments, 'period', None)
     comparison_type = getattr(parameters.arguments, 'comparison_type', 'Y/Y')
     breakout_dimensions = getattr(parameters.arguments, 'breakout_dimensions', None)
@@ -775,6 +784,14 @@ def finance_drivers(parameters: SkillInput):
     table_name = getattr(parameters.arguments, 'table_name', None)
     if table_name == "":
         table_name = None
+
+    # Map metric to display name
+    metric_display_map = {
+        'gross_margin_act': 'Gross Margin',
+        'net_revenue_act': 'Net Revenue',
+        'gross_sales_act': 'Gross Sales'
+    }
+    metric_display = metric_display_map.get(metric, 'Gross Margin')
 
     # Default breakout dimensions if not specified
     if not breakout_dimensions:
@@ -808,7 +825,8 @@ def finance_drivers(parameters: SkillInput):
         breakout_dimensions=breakout_dimensions,
         top_n=top_n,
         other_filters=other_filters,
-        table_name=table_name
+        table_name=table_name,
+        breakout_metric=metric
     )
 
     try:
@@ -856,14 +874,14 @@ def finance_drivers(parameters: SkillInput):
 
     # Breakout tabs
     for dim in breakout_dimensions:
-        bar_data = analysis.create_bar_chart_data(dim)
-        table_data = analysis.get_breakout_table(dim)
+        bar_data = analysis.create_bar_chart_data(dim, metric_display)
+        table_data = analysis.get_breakout_table(dim, metric_display)
 
         if bar_data and table_data:
             dim_display = format_display_name(dim)
             layout_vars = {
                 'headline': f'{dim_display} Breakout',
-                'sub_headline': f'Top {top_n} by Gross Margin Variance',
+                'sub_headline': f'Top {top_n} by {metric_display} Variance',
                 **bar_data,
                 **table_data
             }
@@ -873,6 +891,7 @@ def finance_drivers(parameters: SkillInput):
 
     # Parameter display
     param_info = [
+        ParameterDisplayDescription(key="", value=f"Metric: {metric_display}"),
         ParameterDisplayDescription(key="", value=f"Period: {period}"),
         ParameterDisplayDescription(key="", value=f"Comparison: {comparison_type}"),
         ParameterDisplayDescription(key="", value=f"Dimensions: {', '.join([format_display_name(d) for d in breakout_dimensions])}")
