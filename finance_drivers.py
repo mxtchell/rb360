@@ -1,6 +1,13 @@
 """
-Reckitt Finance Drivers - Revenue-to-Margin Walkdown Analysis
-Y/Y or P/P comparison (no budget/forecast data)
+Finance Drivers - Internal P&L Walkdown Analysis
+
+Analyzes INTERNAL FINANCIAL data with Revenue-to-Margin walkdown:
+- Gross Sales → Trade Deductions → Net Revenue → COGS → Gross Margin
+- Y/Y or P/P variance comparison
+- Dimensional breakouts by category, brand, segment, sub-category
+
+Use for: P&L analysis, profitability, margin drivers, trade spend, revenue variance
+Do NOT use for: Nielsen data, market share, retail sales, distribution metrics
 """
 from __future__ import annotations
 from types import SimpleNamespace
@@ -759,12 +766,12 @@ class FinanceDriversAnalysis:
 
 @skill(
     name="Finance Drivers",
-    llm_name="Finance Drivers - Revenue to Margin Walkdown",
-    description="Analyze finance drivers showing the Revenue-to-Margin walkdown (Gross Sales -> Trade Deductions -> Net Revenue -> COGS -> Gross Margin) with Y/Y or P/P comparison and dimensional breakouts by the selected metric.",
-    capabilities="Revenue-to-margin walkdown analysis. Y/Y and P/P comparisons. Dimensional breakouts by brand, category, segment, country. User can select which metric to analyze in breakouts.",
-    limitations="Requires gross_sales_act, net_revenue_act, gross_margin_act columns.",
-    example_questions="What are the margin drivers for Q1 2026? Show net revenue drivers by brand. Analyze gross sales variance vs prior year.",
-    parameter_guidance="Select a metric for breakout analysis, a period, and comparison type (Y/Y or P/P). The walkdown always shows the full P&L context, but breakout tabs use your selected metric.",
+    llm_name="Finance Drivers - Internal P&L Walkdown Analysis",
+    description="Analyze INTERNAL FINANCIAL data (P&L metrics) with Revenue-to-Margin walkdown showing Gross Sales → Trade Deductions → Net Revenue → COGS → Gross Margin. Use this skill when users ask about finance data, P&L, profitability, margin, revenue, gross sales, trade spend, or COGS. Do NOT use for Nielsen, syndicated, market, or retail sales data.",
+    capabilities="P&L waterfall walkdown visualization. Y/Y and P/P variance analysis. Dimensional breakouts by category, brand, segment, sub-category. Supports gross margin, net revenue, or gross sales as primary metric.",
+    limitations="Only works with internal finance data tables containing gross_sales_act, net_revenue_act, gross_margin_act columns. Not for Nielsen/syndicated data.",
+    example_questions="What are the gross margin drivers for Q1 2026? Why did net revenue change vs last year? Show P&L walkdown by brand. Analyze finance performance by category. What is driving margin variance? Break down trade deductions by segment.",
+    parameter_guidance="Select metric (gross margin, net revenue, or gross sales) for breakout analysis. Select period and comparison type. The waterfall shows full P&L context while breakout tabs focus on your selected metric.",
     parameters=[
         SkillParameter(
             name="metric",

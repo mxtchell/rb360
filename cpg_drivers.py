@@ -1,6 +1,15 @@
 """
-CPG/Nielsen Drivers - Metric Group Analysis
-Shows related metrics together based on metric_hierarchy config
+CPG Drivers - Nielsen/Syndicated Market Data Analysis
+
+Analyzes NIELSEN and SYNDICATED MARKET data including:
+- Total sales (value, units, volume)
+- Market share and distribution (ACV, TDP, weighted/numeric distribution)
+- Pricing (unit price, promo price, price index)
+- Promotional performance (promo vs non-promo, feature, display)
+- Baseline metrics
+
+Use for: Nielsen data, retail sales, market performance, share, distribution, pricing
+Do NOT use for: Internal finance data (gross margin, net revenue, COGS, trade deductions)
 """
 from __future__ import annotations
 import pandas as pd
@@ -578,12 +587,12 @@ def get_metric_group_from_config(client, metric):
 
 @skill(
     name="CPG Drivers",
-    llm_name="CPG Drivers - Metric Performance Analysis",
-    description="Analyze CPG/Nielsen metric performance with related metrics shown together (based on metric_hierarchy config) and dimensional breakouts.",
-    capabilities="Shows metric group performance together. Y/Y and P/P comparisons. Dimensional breakouts by brand, category, etc.",
-    limitations="Requires cpg_metric_groups in dataset misc_info to group related metrics.",
-    example_questions="What are the dollar sales drivers for Q1 2026? Show unit sales performance by brand. Analyze market share drivers.",
-    parameter_guidance="Select a metric - related metrics from its group will be shown together. Select period and comparison type.",
+    llm_name="CPG Drivers - Nielsen/Syndicated Market Data Analysis",
+    description="Analyze NIELSEN and SYNDICATED MARKET data including retail sales, market share, distribution, pricing, and promotional metrics. Use this skill when users ask about Nielsen data, market performance, retail sales, dollar sales, unit sales, volume, ACV, TDP, distribution, share, pricing trends, or promotional effectiveness. Do NOT use for internal finance/P&L data.",
+    capabilities="Market performance analysis with related metrics grouped together. Y/Y and P/P comparisons. Dimensional breakouts by manufacturer, brand, category, segment, market, retailer. Covers total sales, promo vs non-promo, baseline, feature/display, distribution, and pricing metrics.",
+    limitations="Only works with Nielsen/syndicated data tables. Not for internal finance data (gross margin, net revenue, COGS). Requires cpg_metric_groups config in dataset misc_info.",
+    example_questions="What are the total value sales drivers for Q1 2026? Show dollar sales by brand. Analyze distribution trends. What is driving ACV changes? How is promo performance vs prior year? Break down unit sales by category. Show pricing trends by manufacturer. What are the volume drivers?",
+    parameter_guidance="Select a Nielsen metric to analyze - related metrics from its group (e.g., all sales metrics, all distribution metrics) will be shown together in the summary. Select period and comparison type for variance analysis.",
     parameters=[
         SkillParameter(
             name="metric",
