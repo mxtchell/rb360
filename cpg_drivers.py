@@ -342,21 +342,38 @@ class CPGDriversAnalysis:
         return prior_start, prior_end
 
     def query_data(self):
-        """Query current and prior period data"""
+        """Query current and prior period data using joined view"""
         logger.info(f"Querying data for period: {self.period}")
 
         filter_clause = self.build_filter_clause()
         start_date, end_date = self.parse_period_to_date_range(self.period)
         prior_start, prior_end = self.get_prior_period_range(start_date, end_date)
 
-        # Build metric columns for SELECT
-        metric_cols = ', '.join([f'SUM({m}) as {m}' for m in self.metric_group])
+        # Base query joins fact with product and market tables
+        base_query = f"""
+        SELECT
+            f.*,
+            p.BRAND,
+            p.SUB_BRAND,
+            p.MANUFACTURER,
+            p.CATEGORY,
+            p.SUB_CATEGORY,
+            p.SEGMENT,
+            p.SUB_SEGMENT,
+            p.ITEM_DESCRIPTION,
+            m.MARKET_NAME_SHORT,
+            m.MARKET_NAME_LONG,
+            m.MARKET_TYPE,
+            m.NIELSEN_RETAILER
+        FROM {self.table_name} AS f
+        LEFT JOIN nielsen_product AS p ON f.PRODUCT_TAG = p.ITEM_CODE
+        LEFT JOIN nielsen_market AS m ON f.MARKET_TAG = m.MARKET_TAG
+        """
 
         # Query current period
         current_query = f"""
-        SELECT *
-        FROM {self.table_name}
-        WHERE week_ending_date BETWEEN '{start_date}' AND '{end_date}'
+        {base_query}
+        WHERE f.DATE BETWEEN '{start_date}' AND '{end_date}'
         {filter_clause}
         """
 
@@ -369,9 +386,8 @@ class CPGDriversAnalysis:
 
         # Query prior period
         prior_query = f"""
-        SELECT *
-        FROM {self.table_name}
-        WHERE week_ending_date BETWEEN '{prior_start}' AND '{prior_end}'
+        {base_query}
+        WHERE f.DATE BETWEEN '{prior_start}' AND '{prior_end}'
         {filter_clause}
         """
 
