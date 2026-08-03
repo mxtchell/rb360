@@ -547,7 +547,7 @@ class CPGDriversAnalysis:
 
 
 def get_metric_group_from_config(client, metric):
-    """Look up metric's peer group from dataset misc_info"""
+    """Look up metric's peer group from dataset misc_info.cpg_metric_groups"""
     try:
         dataset_id = get_dataset_id()
         dataset = client.data.get_dataset(dataset_id=dataset_id)
@@ -558,15 +558,15 @@ def get_metric_group_from_config(client, metric):
             if isinstance(misc_info, str):
                 misc_info = json.loads(misc_info)
 
-        # Look for metric_hierarchy
-        metric_hierarchy = misc_info.get('metric_hierarchy', [])
+        # Look for cpg_metric_groups config
+        # Structure: {"cpg_metric_groups": {"group_name": ["metric1", "metric2", ...]}}
+        metric_groups = misc_info.get('cpg_metric_groups', {})
 
-        for item in metric_hierarchy:
-            if item.get('metric') == metric:
-                peers = item.get('peer_metrics', [])
-                if peers:
-                    # Return metric + its peers
-                    return [metric] + [p for p in peers if p != metric]
+        # Find which group contains this metric
+        for group_name, metrics in metric_groups.items():
+            if metric in metrics:
+                # Return all metrics in this group, with the selected metric first
+                return [metric] + [m for m in metrics if m != metric]
 
         # If no group found, just return the metric
         return [metric]
@@ -581,7 +581,7 @@ def get_metric_group_from_config(client, metric):
     llm_name="CPG Drivers - Metric Performance Analysis",
     description="Analyze CPG/Nielsen metric performance with related metrics shown together (based on metric_hierarchy config) and dimensional breakouts.",
     capabilities="Shows metric group performance together. Y/Y and P/P comparisons. Dimensional breakouts by brand, category, etc.",
-    limitations="Requires metric_hierarchy in dataset config to group related metrics.",
+    limitations="Requires cpg_metric_groups in dataset misc_info to group related metrics.",
     example_questions="What are the dollar sales drivers for Q1 2026? Show unit sales performance by brand. Analyze market share drivers.",
     parameter_guidance="Select a metric - related metrics from its group will be shown together. Select period and comparison type.",
     parameters=[
