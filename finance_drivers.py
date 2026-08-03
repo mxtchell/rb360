@@ -521,8 +521,14 @@ class FinanceDriversAnalysis:
 
         return self.breakout_results[dimension]
 
-    def create_waterfall_chart_data(self):
-        """Create waterfall chart for P&L walkdown showing variance bridge"""
+    def create_waterfall_chart_data(self, metric='gross_margin_act', metric_display='Gross Margin'):
+        """Create waterfall chart for P&L walkdown showing variance bridge
+
+        Dynamic based on metric:
+        - gross_margin_act: Prior GM → Gross Sales Δ → Trade Ded Δ → COGS Δ → Current GM
+        - net_revenue_act: Prior NR → Gross Sales Δ → Trade Ded Δ → Current NR
+        - gross_sales_act: Prior GS → Current GS (simple comparison)
+        """
         if not self.walkdown_results:
             return None
 
@@ -530,23 +536,15 @@ class FinanceDriversAnalysis:
         prior = self.walkdown_results['prior']
         curr = self.walkdown_results['current']
 
-        # Waterfall: Prior GM -> +/- components -> Current GM
-        categories = [
-            'Prior Gross Margin',
-            'Gross Sales Δ',
-            'Trade Deductions Δ',
-            'COGS Δ',
-            'Current Gross Margin'
-        ]
-
         def get_color(val):
             return '#4ade80' if val >= 0 else '#ef4444'
 
-        data_series = [{
-            'name': 'Gross Margin Walkdown',
-            'data': [
+        if metric == 'gross_margin_act':
+            # Full walkdown: Prior GM → components → Current GM
+            categories = ['Prior', 'Gross Sales Δ', 'Trade Ded Δ', 'COGS Δ', 'Current']
+            data_points = [
                 {
-                    'name': 'Prior Gross Margin',
+                    'name': 'Prior',
                     'y': prior['gross_margin'] / 1_000_000,
                     'color': '#3b82f6',
                     'formatted': format_number(prior['gross_margin'])
@@ -558,25 +556,83 @@ class FinanceDriversAnalysis:
                     'formatted': format_number(var['gross_sales'])
                 },
                 {
-                    'name': 'Trade Deductions Δ',
-                    'y': -var['trade_deductions'] / 1_000_000,  # Negative = good for margin
+                    'name': 'Trade Ded Δ',
+                    'y': -var['trade_deductions'] / 1_000_000,
                     'color': get_color(-var['trade_deductions']),
                     'formatted': format_number(-var['trade_deductions'])
                 },
                 {
                     'name': 'COGS Δ',
-                    'y': -var['cogs'] / 1_000_000,  # Negative = good for margin
+                    'y': -var['cogs'] / 1_000_000,
                     'color': get_color(-var['cogs']),
                     'formatted': format_number(-var['cogs'])
                 },
                 {
-                    'name': 'Current Gross Margin',
+                    'name': 'Current',
                     'isSum': True,
                     'y': curr['gross_margin'] / 1_000_000,
                     'color': '#3b82f6',
                     'formatted': format_number(curr['gross_margin'])
                 }
-            ],
+            ]
+        elif metric == 'net_revenue_act':
+            # Net Revenue walkdown: Prior NR → Gross Sales Δ → Trade Ded Δ → Current NR
+            categories = ['Prior', 'Gross Sales Δ', 'Trade Ded Δ', 'Current']
+            data_points = [
+                {
+                    'name': 'Prior',
+                    'y': prior['net_revenue'] / 1_000_000,
+                    'color': '#3b82f6',
+                    'formatted': format_number(prior['net_revenue'])
+                },
+                {
+                    'name': 'Gross Sales Δ',
+                    'y': var['gross_sales'] / 1_000_000,
+                    'color': get_color(var['gross_sales']),
+                    'formatted': format_number(var['gross_sales'])
+                },
+                {
+                    'name': 'Trade Ded Δ',
+                    'y': -var['trade_deductions'] / 1_000_000,
+                    'color': get_color(-var['trade_deductions']),
+                    'formatted': format_number(-var['trade_deductions'])
+                },
+                {
+                    'name': 'Current',
+                    'isSum': True,
+                    'y': curr['net_revenue'] / 1_000_000,
+                    'color': '#3b82f6',
+                    'formatted': format_number(curr['net_revenue'])
+                }
+            ]
+        else:
+            # Gross Sales: simple comparison (no meaningful breakdown)
+            categories = ['Prior', 'Change', 'Current']
+            data_points = [
+                {
+                    'name': 'Prior',
+                    'y': prior['gross_sales'] / 1_000_000,
+                    'color': '#3b82f6',
+                    'formatted': format_number(prior['gross_sales'])
+                },
+                {
+                    'name': 'Change',
+                    'y': var['gross_sales'] / 1_000_000,
+                    'color': get_color(var['gross_sales']),
+                    'formatted': format_number(var['gross_sales'])
+                },
+                {
+                    'name': 'Current',
+                    'isSum': True,
+                    'y': curr['gross_sales'] / 1_000_000,
+                    'color': '#3b82f6',
+                    'formatted': format_number(curr['gross_sales'])
+                }
+            ]
+
+        data_series = [{
+            'name': f'{metric_display} Walkdown',
+            'data': data_points,
             'dataLabels': {
                 'enabled': True,
                 'format': '{point.formatted}',
@@ -588,7 +644,7 @@ class FinanceDriversAnalysis:
             'chart_categories': categories,
             'chart_data': data_series,
             'chart_y_axis': {
-                'title': {'text': 'Gross Margin ($M)'},
+                'title': {'text': f'{metric_display} ($M)'},
                 'labels': {'format': '${value:,.0f}M'}
             }
         }
@@ -795,7 +851,7 @@ def finance_drivers(parameters: SkillInput):
 
     # Default breakout dimensions if not specified
     if not breakout_dimensions:
-        breakout_dimensions = ['power_brand_name', 'category_description', 'segment_description', 'country']
+        breakout_dimensions = ['category_description', 'power_brand_name', 'segment_description', 'sub_category_description']
 
     # Validate
     if not period:
@@ -857,19 +913,19 @@ def finance_drivers(parameters: SkillInput):
     export_data = {}
 
     # Tab 1: Waterfall + Summary Table
-    waterfall_data = analysis.create_waterfall_chart_data()
+    waterfall_data = analysis.create_waterfall_chart_data(metric, metric_display)
     summary_table = analysis.get_summary_table()
 
     if waterfall_data and summary_table:
         comparison_label = 'Prior Year' if comparison_type == 'Y/Y' else 'Prior Period'
         layout_vars = {
-            'headline': 'Finance Drivers',
+            'headline': f'{metric_display} Drivers',
             'sub_headline': f'{period} vs {comparison_label}',
             **waterfall_data,
             **summary_table
         }
         rendered = wire_layout(json.loads(WATERFALL_LAYOUT), layout_vars)
-        viz_list.append(SkillVisualization(title='Margin Walkdown', layout=rendered))
+        viz_list.append(SkillVisualization(title=f'{metric_display} Walkdown', layout=rendered))
         export_data['Summary'] = pd.DataFrame(summary_table['data'], columns=['Metric', 'Current', 'Prior', 'Variance', 'Var %'])
 
     # Breakout tabs
