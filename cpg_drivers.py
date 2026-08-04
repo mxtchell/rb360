@@ -349,8 +349,9 @@ class CPGDriversAnalysis:
         start_date, end_date = self.parse_period_to_date_range(self.period)
         prior_start, prior_end = self.get_prior_period_range(start_date, end_date)
 
-        # Base query joins fact with product and market tables
-        base_query = f"""
+        # Use subquery pattern with full schema paths (same as ar_analytics)
+        # Schema: poc_analytics.reckitt
+        base_subquery = """
         SELECT
             f.*,
             p.BRAND,
@@ -361,22 +362,29 @@ class CPGDriversAnalysis:
             p.SEGMENT,
             p.SUB_SEGMENT,
             p.ITEM_DESCRIPTION,
+            p.PRODUCT_LONG_DESCRIPTION,
+            p.UPC,
             m.MARKET_NAME_SHORT,
             m.MARKET_NAME_LONG,
-            m.MARKET_TYPE,
-            m.NIELSEN_RETAILER
-        FROM {self.table_name} AS f
-        LEFT JOIN nielsen_product AS p ON f.PRODUCT_TAG = p.ITEM_CODE
-        LEFT JOIN nielsen_market AS m ON f.MARKET_TAG = m.MARKET_TAG
+            m.CHANNEL,
+            m.SUB_CHANNEL,
+            m.NIELSEN_RETAILER,
+            m.MARKET_TYPE
+        FROM poc_analytics.reckitt.nielsen_fact AS f
+        LEFT JOIN poc_analytics.reckitt.nielsen_product AS p
+            ON f.PRODUCT_TAG = p.ITEM_CODE
+        LEFT JOIN poc_analytics.reckitt.nielsen_market AS m
+            ON f.MARKET_TAG = m.MARKET_TAG
         """
 
         # Query current period
         current_query = f"""
-        {base_query}
-        WHERE f.DATE BETWEEN '{start_date}' AND '{end_date}'
+        SELECT * FROM ({base_subquery}) AS r
+        WHERE r.DATE BETWEEN '{start_date}' AND '{end_date}'
         {filter_clause}
         """
 
+        logger.info(f"Executing current period query: {start_date} to {end_date}")
         result = self.client.data.execute_sql_query(
             database_id=self.database_id,
             sql_query=current_query,
@@ -386,11 +394,12 @@ class CPGDriversAnalysis:
 
         # Query prior period
         prior_query = f"""
-        {base_query}
-        WHERE f.DATE BETWEEN '{prior_start}' AND '{prior_end}'
+        SELECT * FROM ({base_subquery}) AS r
+        WHERE r.DATE BETWEEN '{prior_start}' AND '{prior_end}'
         {filter_clause}
         """
 
+        logger.info(f"Executing prior period query: {prior_start} to {prior_end}")
         result = self.client.data.execute_sql_query(
             database_id=self.database_id,
             sql_query=prior_query,
