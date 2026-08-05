@@ -16,7 +16,9 @@ import logging
 import pandas as pd
 import numpy as np
 import jinja2
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.parser import parse as date_parse
+from dateutil.relativedelta import relativedelta
 
 try:
     from ar_analytics import ArUtils
@@ -28,6 +30,66 @@ except ImportError:
 from answer_rocket import AnswerRocketClient
 
 logger = logging.getLogger(__name__)
+
+
+def parse_period_to_date_range(period_str):
+    """Convert period string to (start_date, end_date) tuple."""
+    if not period_str:
+        # Default to last 52 weeks
+        end_date = datetime.now()
+        start_date = end_date - timedelta(weeks=52)
+        return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+
+    period_lower = period_str.lower().strip()
+
+    # Handle quarter format: "Q1 2026" or "Q2 2026"
+    if period_lower.startswith('q'):
+        parts = period_str.split()
+        if len(parts) >= 2:
+            quarter = int(parts[0][1])  # Q1 -> 1
+            year = int(parts[1])
+            quarter_starts = {1: 1, 2: 4, 3: 7, 4: 10}
+            start_month = quarter_starts[quarter]
+            start_date = datetime(year, start_month, 1)
+            end_date = start_date + relativedelta(months=3) - timedelta(days=1)
+            return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+
+    # Handle "last X weeks"
+    if 'last' in period_lower and 'week' in period_lower:
+        try:
+            weeks = int(''.join(filter(str.isdigit, period_lower)))
+            end_date = datetime.now()
+            start_date = end_date - timedelta(weeks=weeks)
+            return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+        except:
+            pass
+
+    # Handle "last X months"
+    if 'last' in period_lower and 'month' in period_lower:
+        try:
+            months = int(''.join(filter(str.isdigit, period_lower)))
+            end_date = datetime.now()
+            start_date = end_date - relativedelta(months=months)
+            return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+        except:
+            pass
+
+    # Try to parse as a date/month
+    try:
+        parsed = date_parse(period_str, fuzzy=True)
+        # If just month/year, return full month range
+        if len(period_str.split()) <= 2:
+            start_date = datetime(parsed.year, parsed.month, 1)
+            end_date = start_date + relativedelta(months=1) - timedelta(days=1)
+            return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+    except:
+        pass
+
+    # Default fallback
+    end_date = datetime.now()
+    start_date = end_date - timedelta(weeks=52)
+    return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+
 
 def build_filter_clause(filters):
     """Build SQL WHERE clause from filter list.
@@ -70,10 +132,14 @@ def build_filter_clause(filters):
     return " AND ".join(clauses)
 
 
-def query_data(client, database_id, filters=None):
+def query_data(client, database_id, filters=None, start_date=None, end_date=None):
     """Query Nielsen data for price index calculation."""
     filter_clause = build_filter_clause(filters) if filters else ""
     where_clause = f"AND {filter_clause}" if filter_clause else ""
+
+    # Add date filter if provided
+    if start_date and end_date:
+        where_clause += f" AND f.DATE BETWEEN '{start_date}' AND '{end_date}'"
 
     query = f"""
     SELECT
@@ -106,22 +172,19 @@ def query_data(client, database_id, filters=None):
     return pd.DataFrame()
 
 
-def calculate_competitor_metrics(df):
+def get_prior_period_range(start_date, end_date):
+    """Get the prior year period for YoY comparison."""
+    start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+    end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+    prior_start = start_dt - relativedelta(years=1)
+    prior_end = end_dt - relativedelta(years=1)
+    return prior_start.strftime('%Y-%m-%d'), prior_end.strftime('%Y-%m-%d')
+
+
+def calculate_competitor_metrics(current_df, prior_df):
     """Calculate YoY metrics for all brands for threat analysis."""
-    if df.empty:
+    if current_df.empty:
         return pd.DataFrame()
-
-    df = df.copy()
-
-    # Get date range
-    max_date = df['week_ending_date'].max()
-    min_date = df['week_ending_date'].min()
-
-    # Define current and prior periods (roughly split in half)
-    mid_date = min_date + (max_date - min_date) / 2
-
-    current_df = df[df['week_ending_date'] > mid_date]
-    prior_df = df[df['week_ending_date'] <= mid_date]
 
     # Aggregate by brand for each period
     def agg_period(period_df):
@@ -131,15 +194,14 @@ def calculate_competitor_metrics(df):
         }).reset_index()
 
     current_agg = agg_period(current_df)
-    prior_agg = agg_period(prior_df)
+    prior_agg = agg_period(prior_df) if not prior_df.empty else pd.DataFrame(columns=['BRAND', 'total_sales', 'total_units'])
 
     # Calculate totals for share
     current_total_sales = current_agg['total_sales'].sum()
-    prior_total_sales = prior_agg['total_sales'].sum()
-    current_total_units = current_agg['total_units'].sum()
+    prior_total_sales = prior_agg['total_sales'].sum() if not prior_agg.empty else 0
 
     # Merge and calculate metrics
-    metrics = current_agg.merge(prior_agg, on='BRAND', suffixes=('_curr', '_prior'), how='outer').fillna(0)
+    metrics = current_agg.merge(prior_agg, on='BRAND', suffixes=('_curr', '_prior'), how='left').fillna(0)
 
     # Calculate derived metrics
     metrics['current_price'] = metrics['total_sales_curr'] / metrics['total_units_curr'].replace(0, np.nan)
@@ -517,8 +579,19 @@ Be direct and specific. **150 words maximum.**""")
     dataset = client.data.get_dataset(dataset_id=dataset_id)
     database_id = dataset.database.database_id
 
-    # Query data
-    df = query_data(client, database_id, other_filters)
+    # Parse period to date range
+    start_date, end_date = parse_period_to_date_range(period)
+    prior_start, prior_end = get_prior_period_range(start_date, end_date)
+    logger.info(f"Price Index Analysis - Current: {start_date} to {end_date}, Prior: {prior_start} to {prior_end}")
+
+    # Query FULL data for chart (no date filter - use all available data)
+    df_chart = query_data(client, database_id, other_filters)
+
+    # Query current period data for KPIs and table
+    df = query_data(client, database_id, other_filters, start_date, end_date)
+
+    # Query prior period data for YoY comparison
+    df_prior = query_data(client, database_id, other_filters, prior_start, prior_end)
 
     if df.empty:
         return SkillOutput(
@@ -527,25 +600,36 @@ Be direct and specific. **150 words maximum.**""")
             visualizations=[]
         )
 
-    # Calculate price index
-    price_df = calculate_price_index(df, target_brand, time_granularity)
+    # Calculate price index for CHART (full historical data)
+    price_df_chart = calculate_price_index(df_chart, target_brand, time_granularity)
+    brand_data_chart = price_df_chart[price_df_chart['BRAND'] == target_brand].sort_values('period')
 
-    # Filter to target brand
-    brand_data = price_df[price_df['BRAND'] == target_brand]
+    # Calculate price index for current PERIOD (for KPIs)
+    price_df_period = calculate_price_index(df, target_brand, time_granularity)
+    brand_data_period = price_df_period[price_df_period['BRAND'] == target_brand]
 
-    if brand_data.empty:
+    if brand_data_period.empty:
         return SkillOutput(
-            final_prompt=f"Brand {target_brand} not found in data.",
-            narrative=f"## {target_brand} Price Index Analysis\n\nBrand not found in the dataset.",
+            final_prompt=f"Brand {target_brand} not found in data for {period}.",
+            narrative=f"## {target_brand} Price Index Analysis\n\nBrand not found in the dataset for the selected period.",
             visualizations=[]
         )
 
-    # Get latest and earliest for summary
-    brand_data = brand_data.sort_values('period')
-    latest = brand_data.iloc[-1]
-    earliest = brand_data.iloc[0]
+    # Get KPI values from the selected period
+    brand_data_period = brand_data_period.sort_values('period')
+    latest = brand_data_period.iloc[-1]
+
+    # Get prior year data for comparison
+    price_df_prior = calculate_price_index(df_prior, target_brand, time_granularity)
+    brand_data_prior = price_df_prior[price_df_prior['BRAND'] == target_brand]
+
+    if not brand_data_prior.empty:
+        prior_index = float(brand_data_prior.iloc[-1]['price_index'])
+    else:
+        prior_index = float(latest['price_index'])  # No change if no prior data
+
     current_index = float(latest['price_index'])
-    index_change = current_index - float(earliest['price_index'])
+    index_change = current_index - prior_index  # YoY change
     category_avg_price = float(latest['category_avg_price'])
     brand_avg_price = float(latest['avg_price'])
 
@@ -553,8 +637,8 @@ Be direct and specific. **150 words maximum.**""")
     direction = "above" if current_index > 100 else "below"
     change_dir = "increased" if index_change > 0 else "decreased"
 
-    # Calculate competitor metrics for insights
-    competitor_metrics_for_insight = calculate_competitor_metrics(df)
+    # Calculate competitor metrics for insights (using current and prior period)
+    competitor_metrics_for_insight = calculate_competitor_metrics(df, df_prior)
     competitor_metrics_for_insight = competitor_metrics_for_insight[competitor_metrics_for_insight['current_share'] >= 1.0]
     competitor_metrics_for_insight = competitor_metrics_for_insight.sort_values('threat_score', ascending=False)
 
@@ -598,9 +682,9 @@ The price index measures {target_brand}'s average price relative to the category
         narrative = default_narrative
         final_prompt_text = f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts."
 
-    # Build visualization data
-    periods = [str(p) for p in brand_data['period'].tolist()]
-    index_values = [float(v) for v in brand_data['price_index'].round(1).tolist()]
+    # Build visualization data (use full chart data for trend)
+    periods = [str(p) for p in brand_data_chart['period'].tolist()]
+    index_values = [float(v) for v in brand_data_chart['price_index'].round(1).tolist()]
 
     # KPI color based on change direction
     change_color = "#22c55e" if index_change > 0 else "#ef4444"
@@ -619,8 +703,8 @@ The price index measures {target_brand}'s average price relative to the category
         {"name": "Status"}
     ]
 
-    # Get competitor metrics for table
-    comp_metrics = calculate_competitor_metrics(df)
+    # Get competitor metrics for table (reuse the same calculation)
+    comp_metrics = calculate_competitor_metrics(df, df_prior)
     comp_metrics = comp_metrics[comp_metrics['current_share'] >= 1.0]
     comp_metrics = comp_metrics.sort_values('threat_score', ascending=False)
 
@@ -700,11 +784,8 @@ The price index measures {target_brand}'s average price relative to the category
                 param_pills.append(ParameterDisplayDescription(key=dim, value=f"{dim_display}: {val_display}"))
 
     # ===== TAB 2: COMPETITOR THREATS =====
-    competitor_metrics = calculate_competitor_metrics(df)
-
-    # Filter to brands with >= 1% market share
-    competitor_metrics = competitor_metrics[competitor_metrics['current_share'] >= 1.0]
-    competitor_metrics = competitor_metrics.sort_values('threat_score', ascending=False)
+    # Reuse comp_metrics already calculated above
+    competitor_metrics = comp_metrics
 
     # Build bubble chart data
     bubble_data = []
