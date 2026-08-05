@@ -15,6 +15,7 @@ import json
 import logging
 import pandas as pd
 import numpy as np
+import jinja2
 from datetime import datetime
 
 try:
@@ -398,6 +399,19 @@ PRICE_INDEX_LAYOUT = """
                     "legend": {"enabled": true},
                     "tooltip": {"shared": true}
                 }
+            },
+            {
+                "name": "TableHeader",
+                "type": "Header",
+                "text": "Brand Comparison",
+                "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "25px", "marginBottom": "15px"}
+            },
+            {
+                "name": "DataTable0",
+                "type": "DataTable",
+                "columns": [],
+                "data": [],
+                "styles": {"td": {"vertical-align": "middle"}}
             }
         ]
     },
@@ -409,7 +423,10 @@ PRICE_INDEX_LAYOUT = """
         {"name": "kpi3_value", "targets": [{"elementName": "KPI3_Value", "fieldName": "text"}]},
         {"name": "kpi4_value", "targets": [{"elementName": "KPI4_Value", "fieldName": "text"}]},
         {"name": "chart_categories", "targets": [{"elementName": "HighchartsChart0", "fieldName": "options.xAxis.categories"}]},
-        {"name": "chart_series", "targets": [{"elementName": "HighchartsChart0", "fieldName": "options.series"}]}
+        {"name": "chart_series", "targets": [{"elementName": "HighchartsChart0", "fieldName": "options.series"}]},
+        {"name": "table_header", "targets": [{"elementName": "TableHeader", "fieldName": "text"}]},
+        {"name": "table_data", "targets": [{"elementName": "DataTable0", "fieldName": "data"}]},
+        {"name": "table_cols", "targets": [{"elementName": "DataTable0", "fieldName": "columns"}]}
     ]
 }
 """
@@ -446,6 +463,28 @@ PRICE_INDEX_LAYOUT = """
             constrained_to="filters",
             is_multi=True,
             description="Additional filters"
+        ),
+        SkillParameter(
+            name="max_prompt",
+            parameter_type="prompt",
+            description="Prompt for the chat response (left panel).",
+            default_value="Answer user question in 30 words or less using following facts:\n{{facts}}"
+        ),
+        SkillParameter(
+            name="insight_prompt",
+            parameter_type="prompt",
+            description="Prompt for the insights panel (right panel).",
+            default_value="""Analyze this pricing data and provide strategic insights:
+
+**DATA:**
+{{facts}}
+
+**ANSWER THESE QUESTIONS:**
+1. **Price Positioning**: Is the brand maintaining premium positioning? How does the price index trend look?
+2. **Competitive Threats**: Which competitors are gaining share while cutting prices?
+3. **Recommendation**: What pricing action should be considered?
+
+Be direct and specific. **150 words maximum.**"""
         )
     ]
 )
@@ -457,6 +496,18 @@ def price_index_minimal(parameters: SkillInput):
     time_granularity = getattr(parameters.arguments, 'time_granularity', 'month') or 'month'
     period = getattr(parameters.arguments, 'period', 'last 52 weeks')
     other_filters = getattr(parameters.arguments, 'other_filters', []) or []
+    max_prompt = getattr(parameters.arguments, 'max_prompt', "Answer user question in 30 words or less using following facts:\n{{facts}}")
+    insight_prompt = getattr(parameters.arguments, 'insight_prompt', """Analyze this pricing data and provide strategic insights:
+
+**DATA:**
+{{facts}}
+
+**ANSWER THESE QUESTIONS:**
+1. **Price Positioning**: Is the brand maintaining premium positioning?
+2. **Competitive Threats**: Which competitors are gaining share while cutting prices?
+3. **Recommendation**: What pricing action should be considered?
+
+Be direct and specific. **150 words maximum.**""")
 
     # Initialize client
     client = AnswerRocketClient()
@@ -521,34 +572,36 @@ Category Avg Price: ${category_avg_price:.2f}
 Top Competitor Threats:
 {chr(10).join(top_threats_text) if top_threats_text else 'No significant threats identified'}"""
 
-    # Generate LLM insights
+    # Generate LLM insights using prompts
+    default_narrative = f"""## {target_brand} Price Index Analysis
+
+**Current Price Index:** {current_index:.1f} ({direction} category average of 100)
+
+**Change over period:** {index_change:+.1f} pts ({change_dir})
+
+The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price."""
+
     try:
         if ArUtils:
             ar_utils = ArUtils()
-            insight_prompt = f"""Analyze this price index data and provide strategic insights in 3-4 sentences:
+            # Render insight_prompt with facts using jinja2
+            env = jinja2.Environment()
+            insight_template = env.from_string(insight_prompt)
+            rendered_insight_prompt = insight_template.render(facts=facts)
 
-{facts}
+            narrative = ar_utils.llm_call(rendered_insight_prompt)
 
-Focus on: Is the brand maintaining premium positioning? Are competitors threatening with price cuts? What's the recommended action?"""
-
-            narrative = ar_utils.llm_call(insight_prompt)
+            # Render max_prompt for final_prompt
+            max_template = env.from_string(max_prompt)
+            rendered_max_prompt = max_template.render(facts=facts)
+            final_prompt_text = ar_utils.llm_call(rendered_max_prompt)
         else:
-            narrative = f"""## {target_brand} Price Index Analysis
-
-**Current Price Index:** {current_index:.1f} ({direction} category average of 100)
-
-**Change over period:** {index_change:+.1f} pts ({change_dir})
-
-The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price."""
+            narrative = default_narrative
+            final_prompt_text = f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts."
     except Exception as e:
         logger.warning(f"LLM call failed: {e}")
-        narrative = f"""## {target_brand} Price Index Analysis
-
-**Current Price Index:** {current_index:.1f} ({direction} category average of 100)
-
-**Change over period:** {index_change:+.1f} pts ({change_dir})
-
-The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price."""
+        narrative = default_narrative
+        final_prompt_text = f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts."
 
     # Build visualization data
     periods = [str(p) for p in brand_data['period'].tolist()]
@@ -556,6 +609,56 @@ The price index measures {target_brand}'s average price relative to the category
 
     # KPI color based on change direction
     change_color = "#22c55e" if index_change > 0 else "#ef4444"
+
+    # Build table data for first tab (same format as threat table)
+    # Show target brand first, then top competitors with their price index
+    table_data = []
+    table_cols = [
+        {"name": "Brand"},
+        {"name": "Sales"},
+        {"name": "$ Chg"},
+        {"name": "Share"},
+        {"name": "Shr Chg"},
+        {"name": "Vol Chg"},
+        {"name": "Prc Chg"},
+        {"name": "Status"}
+    ]
+
+    # Get competitor metrics for table
+    comp_metrics = calculate_competitor_metrics(df)
+    comp_metrics = comp_metrics[comp_metrics['current_share'] >= 1.0]
+    comp_metrics = comp_metrics.sort_values('threat_score', ascending=False)
+
+    # Add target brand first
+    target_metrics = comp_metrics[comp_metrics['BRAND'] == target_brand]
+    for _, row in target_metrics.iterrows():
+        sales_str = f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K"
+        table_data.append([
+            f"**{str(row['BRAND'])}**",
+            sales_str,
+            f"{float(row['sales_growth']):+.1f}%",
+            f"{float(row['current_share']):.1f}%",
+            f"{float(row['share_change']):+.1f}pp",
+            f"{float(row['volume_growth']):+.1f}%",
+            f"{float(row['price_change']):+.1f}%",
+            "⭐"
+        ])
+
+    # Add top competitors
+    other_metrics = comp_metrics[comp_metrics['BRAND'] != target_brand].head(5)
+    for _, row in other_metrics.iterrows():
+        status = "🔴" if (row['volume_growth'] > 0 and row['price_change'] <= 0) else ("🟡" if row['volume_growth'] > 0 else "🟢")
+        sales_str = f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K"
+        table_data.append([
+            str(row['BRAND']),
+            sales_str,
+            f"{float(row['sales_growth']):+.1f}%",
+            f"{float(row['current_share']):.1f}%",
+            f"{float(row['share_change']):+.1f}pp",
+            f"{float(row['volume_growth']):+.1f}%",
+            f"{float(row['price_change']):+.1f}%",
+            status
+        ])
 
     # Wire layout variables
     layout_vars = {
@@ -571,7 +674,10 @@ The price index measures {target_brand}'s average price relative to the category
             "data": index_values,
             "color": "#3b82f6",
             "lineWidth": 3
-        }]
+        }],
+        "table_header": f"{target_brand} vs Top Competitors",
+        "table_data": table_data,
+        "table_cols": table_cols
     }
 
     rendered_layout = wire_layout(json.loads(PRICE_INDEX_LAYOUT), layout_vars)
@@ -709,7 +815,7 @@ The price index measures {target_brand}'s average price relative to the category
     )
 
     return SkillOutput(
-        final_prompt=f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts over the period.",
+        final_prompt=final_prompt_text,
         narrative=narrative,
         visualizations=[viz, threat_viz],
         parameter_display_descriptions=param_pills
