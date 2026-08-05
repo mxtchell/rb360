@@ -645,44 +645,42 @@ The price index measures {target_brand}'s average price relative to the category
         "credits": {"enabled": False}
     }
 
-    # Build threat table data
+    # Build threat table data - use list format for DataTable
     top_threats = competitor_metrics.head(5)
-    threat_rows = []
+    threat_table_data = []
     for _, row in top_threats.iterrows():
-        threat_icon = "red" if (row['volume_growth'] > 0 and row['price_change'] <= 0) else ("yellow" if row['volume_growth'] > 0 else "green")
-        threat_rows.append({
-            "brand": str(row['BRAND']),
-            "curr_sales": f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K",
-            "sales_chg": f"{float(row['sales_growth']):+.1f}%",
-            "sales_color": "#22c55e" if row['sales_growth'] > 0 else "#ef4444",
-            "share": f"{float(row['current_share']):.1f}%",
-            "share_chg": f"{float(row['share_change']):+.1f}pp",
-            "share_color": "#22c55e" if row['share_change'] > 0 else "#ef4444",
-            "vol_chg": f"{float(row['volume_growth']):+.1f}%",
-            "vol_color": "#22c55e" if row['volume_growth'] > 0 else "#ef4444",
-            "price_chg": f"{float(row['price_change']):+.1f}%",
-            "price_color": "#ef4444" if row['price_change'] < 0 else "#22c55e",
-            "threat_icon": threat_icon
-        })
+        threat_icon = "🔴" if (row['volume_growth'] > 0 and row['price_change'] <= 0) else ("🟡" if row['volume_growth'] > 0 else "🟢")
+        sales_str = f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K"
+        threat_table_data.append([
+            str(row['BRAND']),
+            sales_str,
+            f"{float(row['sales_growth']):+.1f}%",
+            f"{float(row['current_share']):.1f}%",
+            f"{float(row['share_change']):+.1f}pp",
+            f"{float(row['volume_growth']):+.1f}%",
+            f"{float(row['price_change']):+.1f}%",
+            threat_icon
+        ])
 
-    # Build threat summary text for display
-    threat_summary_items = []
-    for row in threat_rows[:5]:
-        icon = "🔴" if row["threat_icon"] == "red" else ("🟡" if row["threat_icon"] == "yellow" else "🟢")
-        threat_summary_items.append({
-            "name": f"Threat_{row['brand'][:10]}",
-            "type": "Paragraph",
-            "text": f"{icon} **{row['brand']}**: Sales {row['curr_sales']} ({row['sales_chg']}), Share {row['share']} ({row['share_chg']}), Vol {row['vol_chg']}, Price {row['price_chg']}",
-            "style": {"fontSize": "13px", "marginBottom": "8px", "padding": "10px", "backgroundColor": "#f8fafc", "borderRadius": "6px"}
-        })
+    threat_table_cols = [
+        {"name": "Brand"},
+        {"name": "Sales"},
+        {"name": "$ Chg"},
+        {"name": "Share"},
+        {"name": "Shr Chg"},
+        {"name": "Vol Chg"},
+        {"name": "Prc Chg"},
+        {"name": "Threat"}
+    ]
 
     threat_layout = {
         "type": "Document",
         "style": {"padding": "20px", "gap": "20px"},
         "children": [
             {"name": "BubbleChart", "type": "HighchartsChart", "minHeight": "450px", "options": bubble_chart},
-            {"name": "TableTitle", "type": "Header", "text": "Top 5 Competitor Threats", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px", "marginBottom": "15px"}}
-        ] + threat_summary_items
+            {"name": "TableTitle", "type": "Header", "text": "Top Competitor Threats", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px", "marginBottom": "15px"}},
+            {"name": "ThreatTable", "type": "DataTable", "columns": threat_table_cols, "data": threat_table_data, "styles": {"td": {"vertical-align": "middle"}}}
+        ]
     }
 
     threat_viz = SkillVisualization(
