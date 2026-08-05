@@ -416,13 +416,13 @@ PRICE_INDEX_LAYOUT = """
 
 
 @skill(
-    name="Price Index Analysis",
-    llm_name="Price Index - Brand vs Category Pricing Analysis",
-    description="Analyze brand price positioning vs category average. Use this skill when users ask about price index, pricing vs category, price positioning, or how brand pricing compares to competition.",
-    capabilities="Calculates price index (brand price / category avg price * 100). Shows price index trend over time.",
+    name="Pricing Analysis",
+    llm_name="Pricing_Competitive_Analysis",
+    description="ALWAYS use this skill for ANY question about pricing, price index, price trends, competitive pricing, price positioning, price premium, price gaps, or how a brand's price compares to category or competition. This is the go-to skill for all pricing-related questions.",
+    capabilities="Calculates price index (brand price / category avg * 100). Shows price index trend over time. Identifies competitor threats based on price and volume changes. Visualizes competitive threat matrix with bubble chart. Shows top competitor threats with sales, share, volume, and price changes.",
     limitations="Requires sales and units data to calculate average price.",
-    example_questions="How is Lysol's price index moving vs rest of category? Is Lysol gaining or losing price premium?",
-    parameter_guidance="Select a brand to analyze price index for. Choose time granularity and time period.",
+    example_questions="""How is Lysol's price index trending? What is Lysol's price vs category average? Is Lysol gaining or losing price premium? How does Lysol pricing compare to competition? Which competitors are cutting prices? Show me competitive pricing threats. What's the price gap between Lysol and private label? Are competitors undercutting us on price?""",
+    parameter_guidance="Select a brand to analyze pricing for. Choose time granularity (week/month/quarter) and time period. Add market or category filters as needed.",
     parameters=[
         SkillParameter(
             name="target_brand",
