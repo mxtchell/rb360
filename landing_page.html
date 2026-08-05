@@ -1,3 +1,39 @@
+<script>
+function ask(q) {
+  window.parent.postMessage({ askQuestion: q }, '*');
+}
+
+function toggleTool(id) {
+  var tools = document.querySelectorAll('.rsc-tool');
+  var clicked = document.getElementById('tool-' + id);
+  var wasExpanded = clicked.classList.contains('expanded');
+
+  for (var i = 0; i < tools.length; i++) {
+    tools[i].classList.remove('expanded');
+  }
+
+  if (!wasExpanded) {
+    clicked.classList.add('expanded');
+  }
+}
+
+function showTab(toolId, tabIndex) {
+  var tool = document.getElementById('tool-' + toolId);
+  var tabs = tool.querySelectorAll('.rsc-tab');
+  var contents = tool.querySelectorAll('.rsc-tab-content');
+
+  for (var i = 0; i < tabs.length; i++) {
+    if (i === tabIndex) {
+      tabs[i].classList.add('active');
+      contents[i].classList.add('active');
+    } else {
+      tabs[i].classList.remove('active');
+      contents[i].classList.remove('active');
+    }
+  }
+}
+</script>
+
 <style>
   :root{
     --brand-primary:#E40046;
@@ -515,40 +551,3 @@
   </div>
 </div>
 
-<script>
-function ask(q) {
-  window.parent.postMessage({ askQuestion: q }, '*');
-}
-
-function toggleTool(id) {
-  var tools = document.querySelectorAll('.rsc-tool');
-  var clicked = document.getElementById('tool-' + id);
-  var wasExpanded = clicked.classList.contains('expanded');
-
-  // Collapse all
-  for (var i = 0; i < tools.length; i++) {
-    tools[i].classList.remove('expanded');
-  }
-
-  // Expand if wasn't already
-  if (!wasExpanded) {
-    clicked.classList.add('expanded');
-  }
-}
-
-function showTab(toolId, tabIndex) {
-  var tool = document.getElementById('tool-' + toolId);
-  var tabs = tool.querySelectorAll('.rsc-tab');
-  var contents = tool.querySelectorAll('.rsc-tab-content');
-
-  for (var i = 0; i < tabs.length; i++) {
-    if (i === tabIndex) {
-      tabs[i].classList.add('active');
-      contents[i].classList.add('active');
-    } else {
-      tabs[i].classList.remove('active');
-      contents[i].classList.remove('active');
-    }
-  }
-}
-</script>
