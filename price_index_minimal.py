@@ -77,6 +77,45 @@ def query_data(client, database_id, filters=None):
     return pd.DataFrame()
 
 
+def calculate_price_index(df, target_brand, time_granularity='month'):
+    """Calculate price index for target brand vs category average."""
+    if df.empty:
+        return pd.DataFrame()
+
+    df = df.copy()
+
+    # Aggregate to time granularity
+    if time_granularity == 'month':
+        df['period'] = df['week_ending_date'].dt.to_period('M').astype(str)
+    elif time_granularity == 'quarter':
+        df['period'] = df['week_ending_date'].dt.to_period('Q').astype(str)
+    else:
+        df['period'] = df['week_ending_date'].dt.strftime('%Y-%m-%d')
+
+    # Calculate avg price per brand per period
+    brand_prices = df.groupby(['BRAND', 'period']).agg({
+        'total_sales': 'sum',
+        'total_units': 'sum'
+    }).reset_index()
+    brand_prices['avg_price'] = brand_prices['total_sales'] / brand_prices['total_units']
+
+    # Calculate category avg price per period
+    category_avg = df.groupby('period').agg({
+        'total_sales': 'sum',
+        'total_units': 'sum'
+    }).reset_index()
+    category_avg['category_avg_price'] = category_avg['total_sales'] / category_avg['total_units']
+
+    # Merge and calculate index
+    brand_prices = brand_prices.merge(
+        category_avg[['period', 'category_avg_price']],
+        on='period'
+    )
+    brand_prices['price_index'] = (brand_prices['avg_price'] / brand_prices['category_avg_price']) * 100
+
+    return brand_prices
+
+
 PRICE_INDEX_LAYOUT = """
 {
     "layoutJson": {
