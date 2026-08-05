@@ -381,9 +381,8 @@ def price_index_analysis(
 
     if df.empty:
         return SkillOutput(
-            title="Price Index Analysis",
-            brief_summary="No data found for the specified filters.",
-            detailed_narrative="Unable to calculate price index - no data returned from query.",
+            final_prompt="No data found for the specified filters.",
+            narrative="Unable to calculate price index - no data returned from query.",
             visualizations=[]
         )
 
@@ -392,9 +391,8 @@ def price_index_analysis(
 
     if price_df.empty:
         return SkillOutput(
-            title="Price Index Analysis",
-            brief_summary="Unable to calculate price index for the specified brand.",
-            detailed_narrative="No pricing data available for the target brand.",
+            final_prompt="Unable to calculate price index for the specified brand.",
+            narrative="No pricing data available for the target brand.",
             visualizations=[]
         )
 
@@ -403,9 +401,8 @@ def price_index_analysis(
 
     if target_data.empty:
         return SkillOutput(
-            title="Price Index Analysis",
-            brief_summary=f"No data found for brand: {target_brand}",
-            detailed_narrative=f"The brand '{target_brand}' was not found in the data.",
+            final_prompt=f"No data found for brand: {target_brand}",
+            narrative=f"The brand '{target_brand}' was not found in the data.",
             visualizations=[]
         )
 
@@ -484,9 +481,9 @@ def price_index_analysis(
     position = "premium to" if current_index > 100 else "below" if current_index < 100 else "at"
     trend = "gaining" if index_change > 0 else "losing" if index_change < 0 else "maintaining"
 
-    brief_summary = f"{target_brand} is currently {position} category average with a price index of {current_index:.1f}, {trend} {abs(index_change):.1f} points over the period."
+    final_prompt = f"{target_brand} is currently {position} category average with a price index of {current_index:.1f}, {trend} {abs(index_change):.1f} points over the period."
 
-    detailed_narrative = f"""## {target_brand} Price Index Analysis
+    narrative = f"""## {target_brand} Price Index Analysis
 
 **Current Position:**
 - Price Index: {current_index:.1f} (Category Avg = 100)
@@ -514,9 +511,8 @@ def price_index_analysis(
         param_pills.append(ParameterDisplayDescription(key="compare", value=f"vs: {', '.join(compare_brands)}"))
 
     return SkillOutput(
-        title=f"{target_brand} Price Index Analysis",
-        brief_summary=brief_summary,
-        detailed_narrative=detailed_narrative,
+        final_prompt=final_prompt,
+        narrative=narrative,
         visualizations=[
             SkillVisualization(title="Price Index Trend", layout=html)
         ],
