@@ -28,6 +28,23 @@ from answer_rocket import AnswerRocketClient
 
 logger = logging.getLogger(__name__)
 
+PRICE_INDEX_LAYOUT = """
+{
+    "layoutJson": {
+        "type": "Document",
+        "style": {"padding": "15px"},
+        "children": [
+            {
+                "name": "Header0",
+                "type": "Header",
+                "text": "Price Index Analysis"
+            }
+        ]
+    },
+    "inputVariables": []
+}
+"""
+
 
 @skill(
     name="Price Index Test",
