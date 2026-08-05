@@ -346,17 +346,17 @@ The price index measures {target_brand}'s average price relative to the category
                 "name": "DataTable0",
                 "type": "DataTable",
                 "columns": [
-                    {"field": "Period", "headerName": "Period"},
-                    {"field": "Brand Price", "headerName": f"{target_brand} Avg Price"},
-                    {"field": "Category Avg", "headerName": "Category Avg Price"},
-                    {"field": "Price Index", "headerName": "Price Index"}
+                    {"field": "period", "headerName": "Period"},
+                    {"field": "brand_price", "headerName": f"{target_brand} Avg Price"},
+                    {"field": "category_avg", "headerName": "Category Avg Price"},
+                    {"field": "price_index", "headerName": "Price Index"}
                 ],
                 "data": [
                     {
-                        "Period": row['period'],
-                        "Brand Price": f"${row['avg_price']:.2f}",
-                        "Category Avg": f"${row['category_avg_price']:.2f}",
-                        "Price Index": f"{row['price_index']:.1f}"
+                        "period": str(row['period']),
+                        "brand_price": f"${float(row['avg_price']):.2f}",
+                        "category_avg": f"${float(row['category_avg_price']):.2f}",
+                        "price_index": f"{float(row['price_index']):.1f}"
                     }
                     for _, row in brand_data.iterrows()
                 ]
