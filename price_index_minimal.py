@@ -120,16 +120,216 @@ PRICE_INDEX_LAYOUT = """
 {
     "layoutJson": {
         "type": "Document",
-        "style": {"padding": "15px"},
+        "style": {
+            "backgroundColor": "#ffffff",
+            "width": "100%",
+            "height": "max-content",
+            "padding": "15px",
+            "gap": "20px"
+        },
         "children": [
+            {
+                "name": "HeaderCard",
+                "type": "CardContainer",
+                "minHeight": "80px",
+                "style": {
+                    "borderRadius": "12px",
+                    "background": "linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)",
+                    "padding": "20px"
+                }
+            },
             {
                 "name": "Header0",
                 "type": "Header",
-                "text": "Price Index Analysis"
+                "text": "Price Index Analysis",
+                "style": {
+                    "fontSize": "24px",
+                    "fontWeight": "700",
+                    "color": "#ffffff",
+                    "margin": "0"
+                },
+                "parentId": "HeaderCard"
+            },
+            {
+                "name": "SubHeader",
+                "type": "Paragraph",
+                "text": "Brand Price vs Category Average (100 = Category Avg)",
+                "style": {
+                    "fontSize": "14px",
+                    "color": "#cbd5e1",
+                    "marginTop": "5px"
+                },
+                "parentId": "HeaderCard"
+            },
+            {
+                "name": "KPIContainer",
+                "type": "FlexContainer",
+                "style": {
+                    "display": "flex",
+                    "gap": "20px",
+                    "flexWrap": "wrap",
+                    "marginTop": "10px"
+                }
+            },
+            {
+                "name": "KPI1",
+                "type": "CardContainer",
+                "style": {
+                    "padding": "20px",
+                    "background": "#f8fafc",
+                    "borderRadius": "12px",
+                    "minWidth": "180px",
+                    "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"
+                },
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI1_Label",
+                "type": "Paragraph",
+                "text": "Current Index",
+                "style": {"fontSize": "13px", "color": "#64748b", "fontWeight": "500"},
+                "parentId": "KPI1"
+            },
+            {
+                "name": "KPI1_Value",
+                "type": "Paragraph",
+                "text": "100",
+                "style": {"fontSize": "32px", "fontWeight": "bold", "color": "#1e3a5f", "marginTop": "5px"},
+                "parentId": "KPI1"
+            },
+            {
+                "name": "KPI2",
+                "type": "CardContainer",
+                "style": {
+                    "padding": "20px",
+                    "background": "#f8fafc",
+                    "borderRadius": "12px",
+                    "minWidth": "180px",
+                    "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"
+                },
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI2_Label",
+                "type": "Paragraph",
+                "text": "Index Change",
+                "style": {"fontSize": "13px", "color": "#64748b", "fontWeight": "500"},
+                "parentId": "KPI2"
+            },
+            {
+                "name": "KPI2_Value",
+                "type": "Paragraph",
+                "text": "+0.0 pts",
+                "style": {"fontSize": "32px", "fontWeight": "bold", "color": "#22c55e", "marginTop": "5px"},
+                "parentId": "KPI2"
+            },
+            {
+                "name": "KPI3",
+                "type": "CardContainer",
+                "style": {
+                    "padding": "20px",
+                    "background": "#f8fafc",
+                    "borderRadius": "12px",
+                    "minWidth": "180px",
+                    "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"
+                },
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI3_Label",
+                "type": "Paragraph",
+                "text": "Category Avg Price",
+                "style": {"fontSize": "13px", "color": "#64748b", "fontWeight": "500"},
+                "parentId": "KPI3"
+            },
+            {
+                "name": "KPI3_Value",
+                "type": "Paragraph",
+                "text": "$0.00",
+                "style": {"fontSize": "32px", "fontWeight": "bold", "color": "#1e3a5f", "marginTop": "5px"},
+                "parentId": "KPI3"
+            },
+            {
+                "name": "KPI4",
+                "type": "CardContainer",
+                "style": {
+                    "padding": "20px",
+                    "background": "#f8fafc",
+                    "borderRadius": "12px",
+                    "minWidth": "180px",
+                    "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"
+                },
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI4_Label",
+                "type": "Paragraph",
+                "text": "Brand Avg Price",
+                "style": {"fontSize": "13px", "color": "#64748b", "fontWeight": "500"},
+                "parentId": "KPI4"
+            },
+            {
+                "name": "KPI4_Value",
+                "type": "Paragraph",
+                "text": "$0.00",
+                "style": {"fontSize": "32px", "fontWeight": "bold", "color": "#1e3a5f", "marginTop": "5px"},
+                "parentId": "KPI4"
+            },
+            {
+                "name": "ChartCard",
+                "type": "CardContainer",
+                "style": {
+                    "padding": "20px",
+                    "background": "#ffffff",
+                    "borderRadius": "12px",
+                    "boxShadow": "0 1px 3px rgba(0,0,0,0.1)",
+                    "marginTop": "10px"
+                }
+            },
+            {
+                "name": "ChartTitle",
+                "type": "Paragraph",
+                "text": "Price Index Trend",
+                "style": {"fontSize": "16px", "fontWeight": "600", "color": "#1e3a5f", "marginBottom": "15px"},
+                "parentId": "ChartCard"
+            },
+            {
+                "name": "HighchartsChart0",
+                "type": "HighchartsChart",
+                "minHeight": "350px",
+                "parentId": "ChartCard",
+                "options": {
+                    "chart": {"type": "line", "height": 350},
+                    "title": {"text": ""},
+                    "xAxis": {"categories": [], "title": {"text": ""}},
+                    "yAxis": {
+                        "title": {"text": "Price Index"},
+                        "plotLines": [{
+                            "value": 100,
+                            "color": "#94a3b8",
+                            "dashStyle": "Dash",
+                            "width": 2,
+                            "label": {"text": "Category Avg (100)", "align": "right"}
+                        }]
+                    },
+                    "series": [],
+                    "credits": {"enabled": false},
+                    "legend": {"enabled": true},
+                    "tooltip": {"shared": true}
+                }
             }
         ]
     },
-    "inputVariables": []
+    "inputVariables": [
+        {"name": "headline", "targets": [{"elementName": "Header0", "fieldName": "text"}]},
+        {"name": "kpi1_value", "targets": [{"elementName": "KPI1_Value", "fieldName": "text"}]},
+        {"name": "kpi2_value", "targets": [{"elementName": "KPI2_Value", "fieldName": "text"}]},
+        {"name": "kpi2_color", "targets": [{"elementName": "KPI2_Value", "fieldName": "style.color"}]},
+        {"name": "kpi3_value", "targets": [{"elementName": "KPI3_Value", "fieldName": "text"}]},
+        {"name": "kpi4_value", "targets": [{"elementName": "KPI4_Value", "fieldName": "text"}]},
+        {"name": "chart_categories", "targets": [{"elementName": "HighchartsChart0", "fieldName": "options.xAxis.categories"}]},
+        {"name": "chart_series", "targets": [{"elementName": "HighchartsChart0", "fieldName": "options.series"}]}
+    ]
 }
 """
 
@@ -228,126 +428,37 @@ def price_index_minimal(parameters: SkillInput):
 The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price.
 """
 
-    # Build visualization
-    periods = brand_data['period'].tolist()
-    index_values = brand_data['price_index'].round(1).tolist()
-    category_avg_price = latest['category_avg_price']
-
-    chart_options = {
-        "chart": {"type": "line", "height": 400},
-        "title": {"text": ""},
-        "xAxis": {"categories": periods, "title": {"text": ""}},
-        "yAxis": {
-            "title": {"text": "Price Index"},
-            "plotLines": [{
-                "value": 100,
-                "color": "#94a3b8",
-                "dashStyle": "Dash",
-                "width": 2,
-                "label": {"text": "Category Avg (100)", "align": "right"}
-            }]
-        },
-        "series": [{
-            "name": target_brand,
-            "data": index_values,
-            "color": "#3b82f6",
-            "lineWidth": 3
-        }],
-        "credits": {"enabled": False},
-        "legend": {"enabled": True},
-        "tooltip": {"shared": True}
-    }
+    # Build visualization data
+    periods = [str(p) for p in brand_data['period'].tolist()]
+    index_values = [float(v) for v in brand_data['price_index'].round(1).tolist()]
+    category_avg_price = float(latest['category_avg_price'])
+    brand_avg_price = float(latest['avg_price'])
 
     # KPI color based on change direction
     change_color = "#22c55e" if index_change > 0 else "#ef4444"
 
-    viz_layout = {
-        "type": "Document",
-        "style": {"padding": "15px", "gap": "20px"},
-        "children": [
-            {
-                "name": "Header0",
-                "type": "Header",
-                "text": f"{target_brand} Price Index Analysis",
-                "style": {"fontSize": "20px", "fontWeight": "bold"}
-            },
-            {
-                "name": "KPIContainer",
-                "type": "FlexContainer",
-                "style": {"display": "flex", "gap": "20px", "flexWrap": "wrap"}
-            },
-            {
-                "name": "KPI1",
-                "type": "CardContainer",
-                "style": {"padding": "15px", "background": "#f8fafc", "borderRadius": "8px", "minWidth": "150px"},
-                "parentId": "KPIContainer"
-            },
-            {
-                "name": "KPI1_Label",
-                "type": "Paragraph",
-                "text": "Current Index",
-                "style": {"fontSize": "12px", "color": "#64748b"},
-                "parentId": "KPI1"
-            },
-            {
-                "name": "KPI1_Value",
-                "type": "Paragraph",
-                "text": f"{current_index:.1f}",
-                "style": {"fontSize": "28px", "fontWeight": "bold", "color": "#1e3a5f"},
-                "parentId": "KPI1"
-            },
-            {
-                "name": "KPI2",
-                "type": "CardContainer",
-                "style": {"padding": "15px", "background": "#f8fafc", "borderRadius": "8px", "minWidth": "150px"},
-                "parentId": "KPIContainer"
-            },
-            {
-                "name": "KPI2_Label",
-                "type": "Paragraph",
-                "text": "Index Change",
-                "style": {"fontSize": "12px", "color": "#64748b"},
-                "parentId": "KPI2"
-            },
-            {
-                "name": "KPI2_Value",
-                "type": "Paragraph",
-                "text": f"{index_change:+.1f} pts",
-                "style": {"fontSize": "28px", "fontWeight": "bold", "color": change_color},
-                "parentId": "KPI2"
-            },
-            {
-                "name": "KPI3",
-                "type": "CardContainer",
-                "style": {"padding": "15px", "background": "#f8fafc", "borderRadius": "8px", "minWidth": "150px"},
-                "parentId": "KPIContainer"
-            },
-            {
-                "name": "KPI3_Label",
-                "type": "Paragraph",
-                "text": "Category Avg Price",
-                "style": {"fontSize": "12px", "color": "#64748b"},
-                "parentId": "KPI3"
-            },
-            {
-                "name": "KPI3_Value",
-                "type": "Paragraph",
-                "text": f"${category_avg_price:.2f}",
-                "style": {"fontSize": "28px", "fontWeight": "bold", "color": "#1e3a5f"},
-                "parentId": "KPI3"
-            },
-            {
-                "name": "Chart0",
-                "type": "HighchartsChart",
-                "minHeight": "400px",
-                "options": chart_options
-            }
-        ]
+    # Wire layout variables
+    layout_vars = {
+        "headline": f"{target_brand} Price Index Analysis",
+        "kpi1_value": f"{current_index:.1f}",
+        "kpi2_value": f"{index_change:+.1f} pts",
+        "kpi2_color": change_color,
+        "kpi3_value": f"${category_avg_price:.2f}",
+        "kpi4_value": f"${brand_avg_price:.2f}",
+        "chart_categories": periods,
+        "chart_series": [{
+            "name": target_brand,
+            "data": index_values,
+            "color": "#3b82f6",
+            "lineWidth": 3
+        }]
     }
+
+    rendered_layout = wire_layout(json.loads(PRICE_INDEX_LAYOUT), layout_vars)
 
     viz = SkillVisualization(
         title="Price Index Trend",
-        layout=json.dumps(viz_layout)
+        layout=rendered_layout
     )
 
     # Parameter display
