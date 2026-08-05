@@ -228,8 +228,61 @@ def price_index_minimal(parameters: SkillInput):
 The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price.
 """
 
+    # Build visualization
+    periods = brand_data['period'].tolist()
+    index_values = brand_data['price_index'].round(1).tolist()
+
+    chart_options = {
+        "chart": {"type": "line", "height": 400},
+        "title": {"text": ""},
+        "xAxis": {"categories": periods, "title": {"text": ""}},
+        "yAxis": {
+            "title": {"text": "Price Index"},
+            "plotLines": [{
+                "value": 100,
+                "color": "#94a3b8",
+                "dashStyle": "Dash",
+                "width": 2,
+                "label": {"text": "Category Avg (100)", "align": "right"}
+            }]
+        },
+        "series": [{
+            "name": target_brand,
+            "data": index_values,
+            "color": "#3b82f6",
+            "lineWidth": 3
+        }],
+        "credits": {"enabled": False},
+        "legend": {"enabled": True},
+        "tooltip": {"shared": True}
+    }
+
+    viz_layout = {
+        "type": "Document",
+        "style": {"padding": "15px"},
+        "children": [
+            {
+                "name": "Header0",
+                "type": "Header",
+                "text": f"{target_brand} Price Index Trend",
+                "style": {"fontSize": "18px", "fontWeight": "bold"}
+            },
+            {
+                "name": "Chart0",
+                "type": "HighchartsChart",
+                "minHeight": "400px",
+                "options": chart_options
+            }
+        ]
+    }
+
+    viz = SkillVisualization(
+        title="Price Index Trend",
+        layout=viz_layout
+    )
+
     return SkillOutput(
         final_prompt=f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts over the period.",
         narrative=narrative,
-        visualizations=[]
+        visualizations=[viz]
     )
