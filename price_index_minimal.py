@@ -231,6 +231,7 @@ The price index measures {target_brand}'s average price relative to the category
     # Build visualization
     periods = brand_data['period'].tolist()
     index_values = brand_data['price_index'].round(1).tolist()
+    category_avg_price = latest['category_avg_price']
 
     chart_options = {
         "chart": {"type": "line", "height": 400},
@@ -257,15 +258,83 @@ The price index measures {target_brand}'s average price relative to the category
         "tooltip": {"shared": True}
     }
 
+    # KPI color based on change direction
+    change_color = "#22c55e" if index_change > 0 else "#ef4444"
+
     viz_layout = {
         "type": "Document",
-        "style": {"padding": "15px"},
+        "style": {"padding": "15px", "gap": "20px"},
         "children": [
             {
                 "name": "Header0",
                 "type": "Header",
-                "text": f"{target_brand} Price Index Trend",
-                "style": {"fontSize": "18px", "fontWeight": "bold"}
+                "text": f"{target_brand} Price Index Analysis",
+                "style": {"fontSize": "20px", "fontWeight": "bold"}
+            },
+            {
+                "name": "KPIContainer",
+                "type": "FlexContainer",
+                "style": {"display": "flex", "gap": "20px", "flexWrap": "wrap"}
+            },
+            {
+                "name": "KPI1",
+                "type": "CardContainer",
+                "style": {"padding": "15px", "background": "#f8fafc", "borderRadius": "8px", "minWidth": "150px"},
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI1_Label",
+                "type": "Paragraph",
+                "text": "Current Index",
+                "style": {"fontSize": "12px", "color": "#64748b"},
+                "parentId": "KPI1"
+            },
+            {
+                "name": "KPI1_Value",
+                "type": "Paragraph",
+                "text": f"{current_index:.1f}",
+                "style": {"fontSize": "28px", "fontWeight": "bold", "color": "#1e3a5f"},
+                "parentId": "KPI1"
+            },
+            {
+                "name": "KPI2",
+                "type": "CardContainer",
+                "style": {"padding": "15px", "background": "#f8fafc", "borderRadius": "8px", "minWidth": "150px"},
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI2_Label",
+                "type": "Paragraph",
+                "text": "Index Change",
+                "style": {"fontSize": "12px", "color": "#64748b"},
+                "parentId": "KPI2"
+            },
+            {
+                "name": "KPI2_Value",
+                "type": "Paragraph",
+                "text": f"{index_change:+.1f} pts",
+                "style": {"fontSize": "28px", "fontWeight": "bold", "color": change_color},
+                "parentId": "KPI2"
+            },
+            {
+                "name": "KPI3",
+                "type": "CardContainer",
+                "style": {"padding": "15px", "background": "#f8fafc", "borderRadius": "8px", "minWidth": "150px"},
+                "parentId": "KPIContainer"
+            },
+            {
+                "name": "KPI3_Label",
+                "type": "Paragraph",
+                "text": "Category Avg Price",
+                "style": {"fontSize": "12px", "color": "#64748b"},
+                "parentId": "KPI3"
+            },
+            {
+                "name": "KPI3_Value",
+                "type": "Paragraph",
+                "text": f"${category_avg_price:.2f}",
+                "style": {"fontSize": "28px", "fontWeight": "bold", "color": "#1e3a5f"},
+                "parentId": "KPI3"
             },
             {
                 "name": "Chart0",
