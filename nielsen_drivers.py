@@ -21,14 +21,18 @@ logger = logging.getLogger(__name__)
 def get_cpg_metric_groups():
     """Get cpg_metric_groups from dataset misc_info."""
     dataset_id = os.environ.get('DATASET_ID')
+    logger.info(f"DATASET_ID: {dataset_id}")
     if not dataset_id:
+        logger.warning("No DATASET_ID found in environment")
         return {}
 
     try:
         ar_utils = ArUtils()
         dataset = ar_utils.ar_client.data.get_dataset(dataset_id)
         misc_info = json.loads(dataset.misc_info) if dataset.misc_info else {}
-        return misc_info.get('cpg_metric_groups', {})
+        cpg_groups = misc_info.get('cpg_metric_groups', {})
+        logger.info(f"cpg_metric_groups keys: {list(cpg_groups.keys()) if cpg_groups else 'None'}")
+        return cpg_groups
     except Exception as e:
         logger.warning(f"Failed to get cpg_metric_groups: {e}")
         return {}
@@ -136,11 +140,11 @@ def nielsen_drivers(parameters: SkillInput):
     # Get cpg_metric_groups and build peer_metrics for the requested metric
     cpg_metric_groups = get_cpg_metric_groups()
     requested_metric = param_dict.get("metric", "")
+    cpg_peer_metrics = None  # Store locally, don't rely on env
 
     if cpg_metric_groups and requested_metric:
-        peer_metrics = build_peer_metrics(requested_metric, cpg_metric_groups)
-        logger.info(f"Using cpg_metric_groups - metric: {requested_metric}, peers: {peer_metrics}")
-        param_dict["peer_metrics"] = peer_metrics
+        cpg_peer_metrics = build_peer_metrics(requested_metric, cpg_metric_groups)
+        logger.info(f"Using cpg_metric_groups - metric: {requested_metric}, peers: {cpg_peer_metrics}")
     else:
         logger.info(f"No cpg_metric_groups found - using default metric_hierarchy")
 
@@ -148,32 +152,30 @@ def nielsen_drivers(parameters: SkillInput):
     DriverAnalysisTemplateParameterSetup(env=env)
 
     # Override driver_metrics with only the metrics from cpg_metric_groups
-    if hasattr(env, 'peer_metrics') and env.peer_metrics:
+    if cpg_peer_metrics:
         requested_metric_lower = requested_metric.lower()
-        all_group_metrics = [requested_metric_lower] + [m.lower() for m in env.peer_metrics]
 
         # Create new driver_metrics with only the cpg group metrics
         new_driver_metrics = [{
             "metric": requested_metric_lower,
             "parent_metric": None,
-            "peer_metrics": env.peer_metrics
+            "peer_metrics": cpg_peer_metrics
         }]
 
-        # Add entries for peer metrics (they get their own peer lists from the original hierarchy)
+        # Add entries for peer metrics
         original_driver_metrics = env.driver_analysis_parameters.get("driver_metrics", [])
-        for peer in env.peer_metrics:
+        for peer in cpg_peer_metrics:
             peer_lower = peer.lower()
-            # Find this peer in original metrics to preserve its peer_metrics
+            # Find this peer in original metrics to preserve parent_metric
             for dm in original_driver_metrics:
                 if dm.get("metric", "").lower() == peer_lower:
                     new_driver_metrics.append({
                         "metric": peer_lower,
                         "parent_metric": dm.get("parent_metric"),
-                        "peer_metrics": []  # Peers don't need their own peer list for display
+                        "peer_metrics": []
                     })
                     break
             else:
-                # If not found, add with empty peers
                 new_driver_metrics.append({
                     "metric": peer_lower,
                     "parent_metric": None,
