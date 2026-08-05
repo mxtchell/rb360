@@ -775,11 +775,13 @@ The price index measures {target_brand}'s average price relative to the category
         layout=rendered_layout
     )
 
-    # Parameter display
+    # Parameter display - show actual metrics and comparison
     param_pills = [
         ParameterDisplayDescription(key="brand", value=f"Brand: {target_brand}"),
-        ParameterDisplayDescription(key="period", value=f"Period: {period}"),
-        ParameterDisplayDescription(key="granularity", value=f"By: {time_granularity}")
+        ParameterDisplayDescription(key="current_period", value=f"Current: {start_date} to {end_date}"),
+        ParameterDisplayDescription(key="prior_period", value=f"Prior: {prior_start} to {prior_end}"),
+        ParameterDisplayDescription(key="granularity", value=f"Trend By: {time_granularity}"),
+        ParameterDisplayDescription(key="metrics", value="Price Index | Value Sales | Volume Sales | Market Share")
     ]
 
     # Add other_filters to display
