@@ -646,9 +646,29 @@ The price index measures {target_brand}'s average price relative to the category
     }
 
     # Build threat table data - use list format for DataTable
-    top_threats = competitor_metrics.head(5)
+    # Always show target brand first, then top competitors
+    target_brand_metrics = competitor_metrics[competitor_metrics['BRAND'] == target_brand]
+    other_brands = competitor_metrics[competitor_metrics['BRAND'] != target_brand].head(5)
+
     threat_table_data = []
-    for _, row in top_threats.iterrows():
+
+    # Add target brand first (highlighted)
+    for _, row in target_brand_metrics.iterrows():
+        threat_icon = "⭐"  # Star for target brand
+        sales_str = f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K"
+        threat_table_data.append([
+            f"**{str(row['BRAND'])}**",
+            sales_str,
+            f"{float(row['sales_growth']):+.1f}%",
+            f"{float(row['current_share']):.1f}%",
+            f"{float(row['share_change']):+.1f}pp",
+            f"{float(row['volume_growth']):+.1f}%",
+            f"{float(row['price_change']):+.1f}%",
+            threat_icon
+        ])
+
+    # Add top competitors
+    for _, row in other_brands.iterrows():
         threat_icon = "🔴" if (row['volume_growth'] > 0 and row['price_change'] <= 0) else ("🟡" if row['volume_growth'] > 0 else "🟢")
         sales_str = f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K"
         threat_table_data.append([
@@ -670,7 +690,7 @@ The price index measures {target_brand}'s average price relative to the category
         {"name": "Shr Chg"},
         {"name": "Vol Chg"},
         {"name": "Prc Chg"},
-        {"name": "Threat"}
+        {"name": "Status"}
     ]
 
     threat_layout = {
@@ -678,7 +698,7 @@ The price index measures {target_brand}'s average price relative to the category
         "style": {"padding": "20px", "gap": "20px"},
         "children": [
             {"name": "BubbleChart", "type": "HighchartsChart", "minHeight": "450px", "options": bubble_chart},
-            {"name": "TableTitle", "type": "Header", "text": "Top Competitor Threats", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px", "marginBottom": "15px"}},
+            {"name": "TableTitle", "type": "Header", "text": f"{target_brand} vs Top Competitors", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px", "marginBottom": "15px"}},
             {"name": "ThreatTable", "type": "DataTable", "columns": threat_table_cols, "data": threat_table_data, "styles": {"td": {"vertical-align": "middle"}}}
         ]
     }
