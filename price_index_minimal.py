@@ -369,8 +369,26 @@ The price index measures {target_brand}'s average price relative to the category
         layout=json.dumps(viz_layout)
     )
 
+    # Parameter display
+    param_pills = [
+        ParameterDisplayDescription(key="brand", value=f"Brand: {target_brand}"),
+        ParameterDisplayDescription(key="period", value=f"Period: {period}"),
+        ParameterDisplayDescription(key="granularity", value=f"By: {time_granularity}")
+    ]
+
+    # Add other_filters to display
+    if other_filters:
+        for f in other_filters:
+            dim = f.get('dim', '')
+            vals = f.get('val', [])
+            if dim and vals:
+                dim_display = dim.replace('_', ' ').title()
+                val_display = ', '.join(vals) if isinstance(vals, list) else str(vals)
+                param_pills.append(ParameterDisplayDescription(key=dim, value=f"{dim_display}: {val_display}"))
+
     return SkillOutput(
         final_prompt=f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts over the period.",
         narrative=narrative,
-        visualizations=[viz]
+        visualizations=[viz],
+        parameter_display_descriptions=param_pills
     )
