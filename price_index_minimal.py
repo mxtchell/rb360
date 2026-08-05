@@ -185,12 +185,51 @@ def price_index_minimal(parameters: SkillInput):
     dataset = client.data.get_dataset(dataset_id=dataset_id)
     database_id = dataset.database.database_id
 
-    # Build summary
-    final_prompt = f"{target_brand} price index analysis requested for {period}."
-    narrative = f"## {target_brand} Price Index Analysis\n\nAnalysis pending implementation."
+    # Query data
+    df = query_data(client, database_id, other_filters)
+
+    if df.empty:
+        return SkillOutput(
+            final_prompt=f"No data found for {target_brand} price index analysis.",
+            narrative=f"## {target_brand} Price Index Analysis\n\nNo data available for the selected filters.",
+            visualizations=[]
+        )
+
+    # Calculate price index
+    price_df = calculate_price_index(df, target_brand, time_granularity)
+
+    # Filter to target brand
+    brand_data = price_df[price_df['BRAND'] == target_brand]
+
+    if brand_data.empty:
+        return SkillOutput(
+            final_prompt=f"Brand {target_brand} not found in data.",
+            narrative=f"## {target_brand} Price Index Analysis\n\nBrand not found in the dataset.",
+            visualizations=[]
+        )
+
+    # Get latest and earliest for summary
+    brand_data = brand_data.sort_values('period')
+    latest = brand_data.iloc[-1]
+    earliest = brand_data.iloc[0]
+    current_index = latest['price_index']
+    index_change = current_index - earliest['price_index']
+
+    # Build narrative
+    direction = "above" if current_index > 100 else "below"
+    change_dir = "increased" if index_change > 0 else "decreased"
+
+    narrative = f"""## {target_brand} Price Index Analysis
+
+**Current Price Index:** {current_index:.1f} ({direction} category average of 100)
+
+**Change over period:** {index_change:+.1f} pts ({change_dir})
+
+The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price.
+"""
 
     return SkillOutput(
-        final_prompt=final_prompt,
+        final_prompt=f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts over the period.",
         narrative=narrative,
         visualizations=[]
     )
