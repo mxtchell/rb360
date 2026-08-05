@@ -47,17 +47,36 @@ PRICE_INDEX_LAYOUT = """
 
 
 @skill(
-    name="Price Index Test",
-    llm_name="Price Index Test",
-    description="Test skill",
-    capabilities="Test",
-    limitations="Test",
-    example_questions="Test?",
+    name="Price Index Analysis",
+    llm_name="Price Index - Brand vs Category Pricing Analysis",
+    description="Analyze brand price positioning vs category average. Use this skill when users ask about price index, pricing vs category, price positioning, or how brand pricing compares to competition.",
+    capabilities="Calculates price index (brand price / category avg price * 100). Shows price index trend over time.",
+    limitations="Requires sales and units data to calculate average price.",
+    example_questions="How is Lysol's price index moving vs rest of category? Is Lysol gaining or losing price premium?",
+    parameter_guidance="Select a brand to analyze price index for. Choose time granularity and time period.",
     parameters=[
         SkillParameter(
             name="target_brand",
-            description="Brand to analyze",
+            description="The brand to analyze price index for",
             default_value="LYSOL"
+        ),
+        SkillParameter(
+            name="time_granularity",
+            constrained_values=["week", "month", "quarter"],
+            description="Time granularity for trend analysis",
+            default_value="month"
+        ),
+        SkillParameter(
+            name="period",
+            constrained_to="date_filter",
+            is_multi=False,
+            description="Time period to analyze"
+        ),
+        SkillParameter(
+            name="other_filters",
+            constrained_to="filters",
+            is_multi=True,
+            description="Additional filters"
         )
     ]
 )
