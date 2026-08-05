@@ -224,10 +224,10 @@ def build_filter_clause(filters: list) -> str:
     return " AND ".join(clauses)
 
 
-def query_data(client, dataset_id: str, fact_table: str, product_table: str, filters: list = None) -> pd.DataFrame:
+def query_data(client, database_id: str, filters: list = None) -> pd.DataFrame:
     """Query Nielsen data for price index calculation, joining fact to product dimension."""
     filter_clause = build_filter_clause(filters) if filters else ""
-    where_clause = f"WHERE {filter_clause}" if filter_clause else f"WHERE 1=1"
+    where_clause = f"AND {filter_clause}" if filter_clause else ""
 
     query = f"""
     SELECT
@@ -235,8 +235,10 @@ def query_data(client, dataset_id: str, fact_table: str, product_table: str, fil
         f.week_ending_date,
         SUM(f.TOTAL_VALUE_SALES) as total_sales,
         SUM(f.TOTAL_UNIT_SALES) as total_units
-    FROM {fact_table} f
-    JOIN {product_table} p ON f.PRODUCT_TAG = p.PRODUCT_TAG
+    FROM poc_analytics.reckitt.nielsen_fact AS f
+    LEFT JOIN poc_analytics.reckitt.nielsen_product AS p
+        ON f.PRODUCT_TAG = p.ITEM_CODE
+    WHERE 1=1
     {where_clause}
     GROUP BY p.BRAND, f.week_ending_date
     ORDER BY f.week_ending_date
@@ -245,19 +247,18 @@ def query_data(client, dataset_id: str, fact_table: str, product_table: str, fil
     logger.info(f"Executing query: {query}")
     print(f"DEBUG: Executing query:\n{query}")
 
-    result = client.data.execute_sql_query(dataset_id, query)
+    result = client.data.execute_sql_query(
+        database_id=database_id,
+        sql_query=query,
+        row_limit=100000
+    )
 
-    if result and hasattr(result, 'df') and result.df is not None:
-        df = result.df
-        if not df.empty:
-            df['week_ending_date'] = pd.to_datetime(df['week_ending_date'])
+    df = result.df if hasattr(result, 'df') else None
+
+    if df is not None and not df.empty:
+        df = df.copy()
+        df['week_ending_date'] = pd.to_datetime(df['week_ending_date'])
         print(f"DEBUG: Retrieved {len(df)} rows")
-        return df
-    elif result and 'result' in result:
-        df = pd.DataFrame(result['result'])
-        if not df.empty:
-            df['week_ending_date'] = pd.to_datetime(df['week_ending_date'])
-        print(f"DEBUG: Retrieved {len(df)} rows (from result dict)")
         return df
 
     print(f"DEBUG: No data returned from query")
@@ -322,13 +323,11 @@ Can filter by segment, channel, retailer, or other dimensions.""",
     limitations="""Requires sales and units data to calculate average price.
 Cannot show price index for dimensions without sufficient data.
 Does not forecast future price index.""",
-    example_questions=[
-        "How is Lysol's price index moving vs rest of category?",
-        "What is Lysol's price positioning vs competition?",
-        "Is Lysol gaining or losing price premium?",
-        "Show me price index trend for Lysol by month",
-        "Compare Lysol price index vs Clorox"
-    ]
+    example_questions="""How is Lysol's price index moving vs rest of category?
+What is Lysol's price positioning vs competition?
+Is Lysol gaining or losing price premium?
+Show me price index trend for Lysol by month
+Compare Lysol price index vs Clorox"""
 )
 def price_index_analysis(
     input: SkillInput,
@@ -361,19 +360,7 @@ def price_index_analysis(
         description="Additional filters (segment, channel, retailer)",
         param_type="multi_filter",
         default=[]
-    ) = [],
-    fact_table: SkillParameter(
-        name="fact_table",
-        description="Fact table name for data query",
-        param_type="code_param",
-        default="nielsen_fact"
-    ) = "nielsen_fact",
-    product_table: SkillParameter(
-        name="product_table",
-        description="Product dimension table name",
-        param_type="code_param",
-        default="nielsen_product"
-    ) = "nielsen_product"
+    ) = []
 ) -> SkillOutput:
     """Calculate and visualize price index for brand vs category."""
 
@@ -384,8 +371,13 @@ def price_index_analysis(
     print(f"DEBUG: Starting price index analysis for {target_brand}")
     print(f"DEBUG: Dataset ID: {dataset_id}")
 
+    # Get database_id from dataset
+    dataset = client.data.get_dataset(dataset_id=dataset_id)
+    database_id = dataset.database.database_id
+    print(f"DEBUG: Database ID: {database_id}")
+
     # Query data
-    df = query_data(client, dataset_id, fact_table, product_table, other_filters)
+    df = query_data(client, database_id, other_filters)
 
     if df.empty:
         return SkillOutput(
@@ -530,3 +522,18 @@ def price_index_analysis(
         ],
         parameter_display_descriptions=param_pills
     )
+
+
+if __name__ == '__main__':
+    from skill_framework.preview import preview_skill
+
+    skill_input = price_index_analysis.create_input(
+        arguments={
+            "target_brand": "LYSOL",
+            "compare_brands": [],
+            "time_granularity": "month",
+            "period": "last 52 weeks"
+        }
+    )
+    out = price_index_analysis(skill_input)
+    preview_skill(price_index_analysis, out)
