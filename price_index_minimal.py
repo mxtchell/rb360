@@ -581,20 +581,15 @@ Top Competitor Threats:
 
 The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price."""
 
+    # Generate LLM insights using prompts
+    insight_template_rendered = jinja2.Template(insight_prompt).render(facts=facts)
+    max_prompt_rendered = jinja2.Template(max_prompt).render(facts=facts)
+
     try:
-        if ArUtils:
-            ar_utils = ArUtils()
-            # Render insight_prompt with facts using jinja2
-            env = jinja2.Environment()
-            insight_template = env.from_string(insight_prompt)
-            rendered_insight_prompt = insight_template.render(facts=facts)
-
-            narrative = ar_utils.llm_call(rendered_insight_prompt)
-
-            # Render max_prompt for final_prompt
-            max_template = env.from_string(max_prompt)
-            rendered_max_prompt = max_template.render(facts=facts)
-            final_prompt_text = ar_utils.llm_call(rendered_max_prompt)
+        ar_utils = ArUtils() if ArUtils else None
+        if ar_utils:
+            narrative = ar_utils.get_llm_response(insight_template_rendered)
+            final_prompt_text = ar_utils.get_llm_response(max_prompt_rendered)
         else:
             narrative = default_narrative
             final_prompt_text = f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts."
