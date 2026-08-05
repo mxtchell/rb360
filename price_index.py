@@ -311,58 +311,53 @@ def calculate_price_index(df: pd.DataFrame, target_brand: str, time_granularity:
 
 @skill(
     name="Price Index Analysis",
-    description="""Analyze brand price positioning vs category average and competition.
-Use this skill when the user asks about price index, price positioning, pricing vs category, or how brand pricing compares to competition.
-This skill calculates Price Index where 100 = category average, >100 = premium pricing, <100 = below category average.
-It shows price index trends over time and can compare multiple brands.""",
-    capabilities="""Calculates price index (brand price / category avg price * 100).
-Shows price index trend over time by week, month, or quarter.
-Compares target brand index vs selected competitors.
-Identifies if brand is gaining or losing price premium.
-Can filter by segment, channel, retailer, or other dimensions.""",
-    limitations="""Requires sales and units data to calculate average price.
-Cannot show price index for dimensions without sufficient data.
-Does not forecast future price index.""",
-    example_questions="""How is Lysol's price index moving vs rest of category?
-What is Lysol's price positioning vs competition?
-Is Lysol gaining or losing price premium?
-Show me price index trend for Lysol by month
-Compare Lysol price index vs Clorox"""
+    llm_name="Price Index - Brand vs Category Pricing Analysis",
+    description="Analyze brand price positioning vs category average. Use this skill when users ask about price index, pricing vs category, price positioning, or how brand pricing compares to competition. Calculates Price Index where 100 = category average, >100 = premium pricing, <100 = below category average.",
+    capabilities="Calculates price index (brand price / category avg price * 100). Shows price index trend over time by week, month, or quarter. Compares target brand index vs selected competitors. Identifies if brand is gaining or losing price premium.",
+    limitations="Requires sales and units data to calculate average price. Does not forecast future price index.",
+    example_questions="How is Lysol's price index moving vs rest of category? What is Lysol's price positioning vs competition? Is Lysol gaining or losing price premium? Compare Lysol price index vs Clorox.",
+    parameter_guidance="Select a brand to analyze price index for. Optionally select competitor brands to compare. Choose time granularity (week/month/quarter) and time period.",
+    parameters=[
+        SkillParameter(
+            name="target_brand",
+            description="The brand to analyze price index for",
+            default_value="LYSOL"
+        ),
+        SkillParameter(
+            name="compare_brands",
+            constrained_to="dimensions",
+            is_multi=True,
+            description="Additional brands to compare against (optional)"
+        ),
+        SkillParameter(
+            name="time_granularity",
+            constrained_values=["week", "month", "quarter"],
+            description="Time granularity for trend analysis",
+            default_value="month"
+        ),
+        SkillParameter(
+            name="period",
+            constrained_to="date_filter",
+            is_multi=False,
+            description="Time period to analyze (e.g., 'last 52 weeks', 'YTD', '2024')"
+        ),
+        SkillParameter(
+            name="other_filters",
+            constrained_to="filters",
+            is_multi=True,
+            description="Additional filters (segment, channel, retailer)"
+        )
+    ]
 )
-def price_index_analysis(
-    input: SkillInput,
-    target_brand: SkillParameter(
-        name="target_brand",
-        description="The brand to analyze price index for",
-        default="LYSOL"
-    ) = "LYSOL",
-    compare_brands: SkillParameter(
-        name="compare_brands",
-        description="Additional brands to compare against (optional)",
-        param_type="multi_select",
-        default=[]
-    ) = [],
-    time_granularity: SkillParameter(
-        name="time_granularity",
-        description="Time granularity for trend analysis",
-        param_type="constrained",
-        allowed_values=["week", "month", "quarter"],
-        default="month"
-    ) = "month",
-    period: SkillParameter(
-        name="period",
-        description="Time period to analyze (e.g., 'last 52 weeks', 'YTD', '2024')",
-        param_type="date_filter",
-        default="last 52 weeks"
-    ) = "last 52 weeks",
-    other_filters: SkillParameter(
-        name="other_filters",
-        description="Additional filters (segment, channel, retailer)",
-        param_type="multi_filter",
-        default=[]
-    ) = []
-) -> SkillOutput:
+def price_index_analysis(parameters: SkillInput):
     """Calculate and visualize price index for brand vs category."""
+
+    # Extract parameters
+    target_brand = getattr(parameters.arguments, 'target_brand', 'LYSOL') or 'LYSOL'
+    compare_brands = getattr(parameters.arguments, 'compare_brands', []) or []
+    time_granularity = getattr(parameters.arguments, 'time_granularity', 'month') or 'month'
+    period = getattr(parameters.arguments, 'period', 'last 52 weeks')
+    other_filters = getattr(parameters.arguments, 'other_filters', []) or []
 
     # Initialize client
     client = AnswerRocketClient()
