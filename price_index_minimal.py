@@ -29,17 +29,37 @@ from answer_rocket import AnswerRocketClient
 logger = logging.getLogger(__name__)
 
 def build_filter_clause(filters):
-    """Build SQL WHERE clause from filter list."""
+    """Build SQL WHERE clause from filter list.
+
+    Maps dimension names to proper table aliases:
+    - Product dimensions (BRAND, MARKET, CATEGORY, etc.) -> p.
+    - Fact dimensions (week_ending_date, etc.) -> f.
+    """
     if not filters:
         return ""
+
+    # Dimensions that come from product table
+    product_dims = {'BRAND', 'MARKET', 'CATEGORY', 'SUBCATEGORY', 'SUB_CATEGORY',
+                    'SEGMENT', 'MANUFACTURER', 'ITEM_CODE', 'UPC', 'PRODUCT_TAG'}
+
     clauses = []
     for f in filters:
         dim = f.get('dim', '')
         vals = f.get('val', [])
         if dim and vals:
+            # Determine table prefix
+            dim_upper = dim.upper()
+            if dim_upper in product_dims:
+                col_ref = f"p.{dim}"
+            else:
+                col_ref = f"f.{dim}"
+
             escaped_vals = [v.replace("'", "''") for v in vals]
-            val_str = ", ".join([f"'{v}'" for v in escaped_vals])
-            clauses.append(f"{dim} IN ({val_str})")
+            if len(vals) == 1:
+                clauses.append(f"UPPER({col_ref}) = UPPER('{escaped_vals[0]}')")
+            else:
+                val_str = ", ".join([f"UPPER('{v}')" for v in escaped_vals])
+                clauses.append(f"UPPER({col_ref}) IN ({val_str})")
     return " AND ".join(clauses)
 
 
