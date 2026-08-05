@@ -442,26 +442,32 @@
 <script>
     var toolData = {
         "Trend Analysis": [
-            { prompt: "Sales Trend", question: "Show Lysol sales trend over the past 2 years" },
-            { prompt: "Volume Trend", question: "Show Lysol volume trend for the last 12 months" },
-            { prompt: "Price Trend", question: "What is the average price trend for Lysol?" },
-            { prompt: "Share Trend", question: "Show Lysol market share trend over the past year" }
+            { prompt: "Category Performance", question: "How is my category performing in the current period?" },
+            { prompt: "Volume Trend YTD", question: "Create a trend line of my volume sales for YTD vs last year same period at brand level" },
+            { prompt: "Price Trend", question: "What is the average unit price for total brand for the last 4 weeks vs last year?" },
+            { prompt: "Share Trend", question: "Is my brand gaining or losing share? Against which competitors?" }
         ],
         "Driver Analysis": [
-            { prompt: "Revenue Drivers", question: "What is driving Net Revenue performance vs last year?" },
-            { prompt: "Margin Drivers", question: "What is driving Gross Margin performance vs prior year?" },
-            { prompt: "Volume Drivers", question: "What are the drivers of volume change vs last year?" }
+            { prompt: "Net Revenue Drivers", question: "What are the key drivers of performance for my Net Revenue YTD?" },
+            { prompt: "Growth Drivers", question: "What are the key reasons behind my brand's growth or decline in a given period?" },
+            { prompt: "Segment Drivers", question: "Which segments, formats, or subcategories are driving my performance?" },
+            { prompt: "Trade Spend", question: "How does the performance of my Trade spend for the current year compared to last year?" },
+            { prompt: "Gaining vs Draining", question: "What are the segments that are gaining and draining my performance in the past MAT?" },
+            { prompt: "Structural vs Temporary", question: "Which drivers are structural vs temporary?" },
+            { prompt: "Risks and Opportunities", question: "Are there emerging patterns or trends that represent a risk or opportunity versus our forecast?" }
         ],
         "Dimension Breakout": [
-            { prompt: "Market Share", question: "What is Lysol market share in Q2 2026?" },
-            { prompt: "By Channel", question: "Show Lysol sales by channel for Q2 2026" },
-            { prompt: "By Region", question: "Break down Lysol performance by region" },
-            { prompt: "Brand Comparison", question: "Compare Lysol performance vs competitors in Q2 2026" }
+            { prompt: "Share vs Competitors", question: "Is my brand gaining or losing share? Against which competitors?" },
+            { prompt: "Who is Gaining", question: "Who is gaining share in the areas where my brand is declining?" },
+            { prompt: "Retailer Share Loss", question: "Which Retailer is my brand losing share in the past 13 weeks?" },
+            { prompt: "TDP Loss by Retailer", question: "Which retailer is my brand losing TDPs considering YTD vs Year ago?" },
+            { prompt: "Distribution Opportunity", question: "Which retailers and products do we have an opportunity to gain back distribution on, and what is the size of prize of activating this?" },
+            { prompt: "Internal vs External", question: "Is my market share impacted by my internal financials performance? Is there a correlation between Internal and external performance?" }
         ],
         "Pricing Analysis": [
-            { prompt: "Price Index", question: "What is Lysol price index vs category in Q2 2026?" },
-            { prompt: "Price Gap", question: "What is the price gap between Lysol and private label?" },
-            { prompt: "Promo Analysis", question: "How does Lysol pricing compare to Clorox?" }
+            { prompt: "Price Index vs Category", question: "How is my price index moving vs rest of category?" },
+            { prompt: "Unit Price Trend", question: "What is the average unit price for total brand for the last 4 weeks vs last year?" },
+            { prompt: "Price vs Competitors", question: "How does Lysol pricing compare to key competitors?" }
         ]
     };
 
