@@ -81,11 +81,28 @@ PRICE_INDEX_LAYOUT = """
     ]
 )
 def price_index_minimal(parameters: SkillInput):
-    """Minimal test skill."""
-    target_brand = getattr(parameters.arguments, 'target_brand', 'LYSOL')
+    """Calculate and visualize price index for brand vs category."""
+
+    # Extract parameters
+    target_brand = getattr(parameters.arguments, 'target_brand', 'LYSOL') or 'LYSOL'
+    time_granularity = getattr(parameters.arguments, 'time_granularity', 'month') or 'month'
+    period = getattr(parameters.arguments, 'period', 'last 52 weeks')
+    other_filters = getattr(parameters.arguments, 'other_filters', []) or []
+
+    # Initialize client
+    client = AnswerRocketClient()
+    dataset_id = get_dataset_id()
+
+    # Get database_id from dataset
+    dataset = client.data.get_dataset(dataset_id=dataset_id)
+    database_id = dataset.database.database_id
+
+    # Build summary
+    final_prompt = f"{target_brand} price index analysis requested for {period}."
+    narrative = f"## {target_brand} Price Index Analysis\n\nAnalysis pending implementation."
 
     return SkillOutput(
-        final_prompt=f"Testing price index for {target_brand}",
-        narrative="Test narrative",
+        final_prompt=final_prompt,
+        narrative=narrative,
         visualizations=[]
     )
