@@ -366,7 +366,7 @@ The price index measures {target_brand}'s average price relative to the category
 
     viz = SkillVisualization(
         title="Price Index Trend",
-        layout=viz_layout
+        layout=json.dumps(viz_layout)
     )
 
     return SkillOutput(
