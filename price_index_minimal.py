@@ -28,6 +28,55 @@ from answer_rocket import AnswerRocketClient
 
 logger = logging.getLogger(__name__)
 
+def build_filter_clause(filters):
+    """Build SQL WHERE clause from filter list."""
+    if not filters:
+        return ""
+    clauses = []
+    for f in filters:
+        dim = f.get('dim', '')
+        vals = f.get('val', [])
+        if dim and vals:
+            escaped_vals = [v.replace("'", "''") for v in vals]
+            val_str = ", ".join([f"'{v}'" for v in escaped_vals])
+            clauses.append(f"{dim} IN ({val_str})")
+    return " AND ".join(clauses)
+
+
+def query_data(client, database_id, filters=None):
+    """Query Nielsen data for price index calculation."""
+    filter_clause = build_filter_clause(filters) if filters else ""
+    where_clause = f"AND {filter_clause}" if filter_clause else ""
+
+    query = f"""
+    SELECT
+        p.BRAND,
+        f.week_ending_date,
+        SUM(f.TOTAL_VALUE_SALES) as total_sales,
+        SUM(f.TOTAL_UNIT_SALES) as total_units
+    FROM poc_analytics.reckitt.nielsen_fact AS f
+    LEFT JOIN poc_analytics.reckitt.nielsen_product AS p
+        ON f.PRODUCT_TAG = p.ITEM_CODE
+    WHERE 1=1
+    {where_clause}
+    GROUP BY p.BRAND, f.week_ending_date
+    ORDER BY f.week_ending_date
+    """
+
+    result = client.data.execute_sql_query(
+        database_id=database_id,
+        sql_query=query,
+        row_limit=100000
+    )
+
+    df = result.df if hasattr(result, 'df') else None
+    if df is not None and not df.empty:
+        df = df.copy()
+        df['week_ending_date'] = pd.to_datetime(df['week_ending_date'])
+        return df
+    return pd.DataFrame()
+
+
 PRICE_INDEX_LAYOUT = """
 {
     "layoutJson": {
