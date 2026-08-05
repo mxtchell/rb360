@@ -77,6 +77,59 @@ def query_data(client, database_id, filters=None):
     return pd.DataFrame()
 
 
+def calculate_competitor_metrics(df):
+    """Calculate YoY metrics for all brands for threat analysis."""
+    if df.empty:
+        return pd.DataFrame()
+
+    df = df.copy()
+
+    # Get date range
+    max_date = df['week_ending_date'].max()
+    min_date = df['week_ending_date'].min()
+
+    # Define current and prior periods (roughly split in half)
+    mid_date = min_date + (max_date - min_date) / 2
+
+    current_df = df[df['week_ending_date'] > mid_date]
+    prior_df = df[df['week_ending_date'] <= mid_date]
+
+    # Aggregate by brand for each period
+    def agg_period(period_df):
+        return period_df.groupby('BRAND').agg({
+            'total_sales': 'sum',
+            'total_units': 'sum'
+        }).reset_index()
+
+    current_agg = agg_period(current_df)
+    prior_agg = agg_period(prior_df)
+
+    # Calculate totals for share
+    current_total_sales = current_agg['total_sales'].sum()
+    prior_total_sales = prior_agg['total_sales'].sum()
+    current_total_units = current_agg['total_units'].sum()
+
+    # Merge and calculate metrics
+    metrics = current_agg.merge(prior_agg, on='BRAND', suffixes=('_curr', '_prior'), how='outer').fillna(0)
+
+    # Calculate derived metrics
+    metrics['current_price'] = metrics['total_sales_curr'] / metrics['total_units_curr'].replace(0, np.nan)
+    metrics['prior_price'] = metrics['total_sales_prior'] / metrics['total_units_prior'].replace(0, np.nan)
+    metrics['price_change'] = ((metrics['current_price'] - metrics['prior_price']) / metrics['prior_price'].replace(0, np.nan) * 100).fillna(0)
+
+    metrics['volume_growth'] = ((metrics['total_units_curr'] - metrics['total_units_prior']) / metrics['total_units_prior'].replace(0, np.nan) * 100).fillna(0)
+    metrics['sales_growth'] = ((metrics['total_sales_curr'] - metrics['total_sales_prior']) / metrics['total_sales_prior'].replace(0, np.nan) * 100).fillna(0)
+
+    metrics['current_share'] = (metrics['total_sales_curr'] / current_total_sales * 100) if current_total_sales > 0 else 0
+    metrics['prior_share'] = (metrics['total_sales_prior'] / prior_total_sales * 100) if prior_total_sales > 0 else 0
+    metrics['share_change'] = metrics['current_share'] - metrics['prior_share']
+
+    # Threat score: volume growth (good for them) minus price change (cutting price = threat)
+    metrics['threat_score'] = (metrics['volume_growth'] * 0.7) - (metrics['price_change'] * 0.3)
+
+    return metrics
+
+
 def calculate_price_index(df, target_brand, time_granularity='month'):
     """Calculate price index for target brand vs category average."""
     if df.empty:
@@ -478,9 +531,100 @@ The price index measures {target_brand}'s average price relative to the category
                 val_display = ', '.join(vals) if isinstance(vals, list) else str(vals)
                 param_pills.append(ParameterDisplayDescription(key=dim, value=f"{dim_display}: {val_display}"))
 
+    # ===== TAB 2: COMPETITOR THREATS =====
+    competitor_metrics = calculate_competitor_metrics(df)
+
+    # Filter to brands with >= 1% market share
+    competitor_metrics = competitor_metrics[competitor_metrics['current_share'] >= 1.0]
+    competitor_metrics = competitor_metrics.sort_values('threat_score', ascending=False)
+
+    # Build bubble chart data
+    bubble_data = []
+    for _, row in competitor_metrics.iterrows():
+        # Color: Red = threat (volume up, price down), Yellow = watch (volume up), Green = declining
+        if row['volume_growth'] > 0 and row['price_change'] <= 0:
+            color = '#ef4444'  # Red - threat
+        elif row['volume_growth'] > 0:
+            color = '#fbbf24'  # Yellow - watch
+        else:
+            color = '#10b981'  # Green - declining
+
+        bubble_data.append({
+            'x': round(float(row['price_change']), 1),
+            'y': round(float(row['volume_growth']), 1),
+            'z': round(float(row['current_share']), 1),
+            'name': str(row['BRAND']),
+            'color': color
+        })
+
+    bubble_chart = {
+        "chart": {"type": "bubble", "height": 450, "zoomType": "xy"},
+        "title": {"text": "Competitive Threat Matrix", "style": {"fontSize": "20px", "fontWeight": "bold"}},
+        "subtitle": {"text": "Bubble size = Market Share | Red = Threat | Yellow = Watch | Green = Declining", "style": {"fontSize": "13px", "color": "#666"}},
+        "xAxis": {
+            "title": {"text": "Price Change (%)"},
+            "gridLineWidth": 1,
+            "plotLines": [{"value": 0, "color": "#94a3b8", "dashStyle": "Dash", "width": 2}]
+        },
+        "yAxis": {
+            "title": {"text": "Volume Growth (%)"},
+            "gridLineWidth": 1,
+            "plotLines": [{"value": 0, "color": "#94a3b8", "dashStyle": "Dash", "width": 2}]
+        },
+        "tooltip": {"pointFormat": "<b>{point.name}</b><br/>Volume: {point.y}%<br/>Price: {point.x}%<br/>Share: {point.z}%"},
+        "plotOptions": {"bubble": {"minSize": 10, "maxSize": 50, "dataLabels": {"enabled": True, "format": "{point.name}", "style": {"fontSize": "10px"}}}},
+        "series": [{"name": "Competitors", "data": bubble_data}],
+        "legend": {"enabled": False},
+        "credits": {"enabled": False}
+    }
+
+    # Build threat table data
+    top_threats = competitor_metrics.head(5)
+    threat_rows = []
+    for _, row in top_threats.iterrows():
+        threat_icon = "red" if (row['volume_growth'] > 0 and row['price_change'] <= 0) else ("yellow" if row['volume_growth'] > 0 else "green")
+        threat_rows.append({
+            "brand": str(row['BRAND']),
+            "curr_sales": f"${float(row['total_sales_curr'])/1e6:.1f}M" if row['total_sales_curr'] >= 1e6 else f"${float(row['total_sales_curr'])/1e3:.0f}K",
+            "sales_chg": f"{float(row['sales_growth']):+.1f}%",
+            "sales_color": "#22c55e" if row['sales_growth'] > 0 else "#ef4444",
+            "share": f"{float(row['current_share']):.1f}%",
+            "share_chg": f"{float(row['share_change']):+.1f}pp",
+            "share_color": "#22c55e" if row['share_change'] > 0 else "#ef4444",
+            "vol_chg": f"{float(row['volume_growth']):+.1f}%",
+            "vol_color": "#22c55e" if row['volume_growth'] > 0 else "#ef4444",
+            "price_chg": f"{float(row['price_change']):+.1f}%",
+            "price_color": "#ef4444" if row['price_change'] < 0 else "#22c55e",
+            "threat_icon": threat_icon
+        })
+
+    threat_layout = {
+        "type": "Document",
+        "style": {"padding": "20px", "gap": "20px"},
+        "children": [
+            {"name": "BubbleChart", "type": "HighchartsChart", "minHeight": "450px", "options": bubble_chart},
+            {"name": "TableTitle", "type": "Header", "text": "Top 5 Competitor Threats", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px"}},
+            {"name": "ThreatTable", "type": "DataTable", "columns": [
+                {"field": "brand", "headerName": "Brand"},
+                {"field": "curr_sales", "headerName": "Current $"},
+                {"field": "sales_chg", "headerName": "$ Chg"},
+                {"field": "share", "headerName": "Share"},
+                {"field": "share_chg", "headerName": "Shr Chg"},
+                {"field": "vol_chg", "headerName": "Vol Chg"},
+                {"field": "price_chg", "headerName": "Prc Chg"},
+                {"field": "threat_icon", "headerName": "Threat"}
+            ], "data": threat_rows}
+        ]
+    }
+
+    threat_viz = SkillVisualization(
+        title="Competitor Threats",
+        layout=json.dumps(threat_layout)
+    )
+
     return SkillOutput(
         final_prompt=f"{target_brand} price index is {current_index:.1f}, {change_dir} by {abs(index_change):.1f} pts over the period.",
         narrative=narrative,
-        visualizations=[viz],
+        visualizations=[viz, threat_viz],
         parameter_display_descriptions=param_pills
     )
