@@ -341,25 +341,6 @@ The price index measures {target_brand}'s average price relative to the category
                 "type": "HighchartsChart",
                 "minHeight": "400px",
                 "options": chart_options
-            },
-            {
-                "name": "DataTable0",
-                "type": "DataTable",
-                "columns": [
-                    {"field": "period", "headerName": "Period"},
-                    {"field": "brand_price", "headerName": f"{target_brand} Avg Price"},
-                    {"field": "category_avg", "headerName": "Category Avg Price"},
-                    {"field": "price_index", "headerName": "Price Index"}
-                ],
-                "data": [
-                    {
-                        "period": str(row['period']),
-                        "brand_price": f"${float(row['avg_price']):.2f}",
-                        "category_avg": f"${float(row['category_avg_price']):.2f}",
-                        "price_index": f"{float(row['price_index']):.1f}"
-                    }
-                    for _, row in brand_data.iterrows()
-                ]
             }
         ]
     }
