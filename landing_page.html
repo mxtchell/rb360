@@ -9,6 +9,7 @@
     --muted:#64748b;
     --glass: rgba(255,255,255,0.08);
     --glass-2: rgba(255,255,255,0.12);
+    --glass-3: rgba(255,255,255,0.18);
     --glass-light: rgba(255,255,255,0.95);
     --stroke: rgba(255,255,255,0.12);
     --shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
@@ -26,7 +27,7 @@
 
   .rsc-hero{
     text-align:center;
-    padding:32px 20px 28px;
+    padding:28px 20px 24px;
     position:relative;
     overflow:hidden;
   }
@@ -54,19 +55,19 @@
     justify-content:center;
     align-items:center;
     gap:14px;
-    margin-bottom:18px;
+    margin-bottom:14px;
     position:relative;
     z-index:1;
   }
 
   .rsc-logo-img{
-    height:40px;
+    height:36px;
     width:auto;
   }
 
   .rsc-hero h1{
     margin:0;
-    font-size:38px;
+    font-size:34px;
     line-height:1.1;
     letter-spacing:-0.03em;
     color:var(--white);
@@ -76,15 +77,15 @@
   }
 
   .rsc-hero h1 .highlight{
-    color:var(--brand-primary);
+    color:#FF1493;
   }
 
   .rsc-hero p{
-    margin:14px auto 0;
-    max-width:800px;
-    color:rgba(255,255,255,0.75);
-    font-size:16px;
-    line-height:1.6;
+    margin:12px auto 0;
+    max-width:700px;
+    color:rgba(255,255,255,0.7);
+    font-size:15px;
+    line-height:1.5;
     font-weight:500;
     position:relative;
     z-index:1;
@@ -104,14 +105,14 @@
     max-width:100%;
     display:flex;
     flex-direction:column;
-    gap:24px;
+    gap:20px;
   }
 
   .rsc-section-label{
     display:flex;
     align-items:center;
     gap:10px;
-    margin-bottom:6px;
+    margin-bottom:4px;
   }
 
   .rsc-section-label span{
@@ -129,17 +130,17 @@
     background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%);
   }
 
-  .rsc-topics{
+  .rsc-tools{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:20px;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
   }
 
-  .rsc-topic{
+  .rsc-tool{
     background: var(--glass);
     border:1px solid var(--stroke);
-    border-radius:24px;
-    padding:28px 24px;
+    border-radius:20px;
+    padding:20px;
     cursor:pointer;
     transition: all .3s ease;
     position:relative;
@@ -148,7 +149,7 @@
     -webkit-backdrop-filter: blur(20px);
   }
 
-  .rsc-topic::before{
+  .rsc-tool::before{
     content:"";
     position:absolute;
     top:0;
@@ -160,115 +161,175 @@
     transition: opacity .3s ease;
   }
 
-  .rsc-topic:hover{
-    transform: translateY(-4px);
-    box-shadow: var(--shadow);
+  .rsc-tool:hover{
     background: var(--glass-2);
     border-color: rgba(255,255,255,0.2);
   }
 
-  .rsc-topic:hover::before{
+  .rsc-tool.active{
+    background: var(--glass-3);
+    border-color: rgba(228,0,70,0.4);
+  }
+
+  .rsc-tool.active::before{
     opacity:1;
   }
 
-  .rsc-topic-header{
+  .rsc-tool-header{
     display:flex;
-    align-items:flex-start;
-    gap:16px;
-    margin-bottom:16px;
+    align-items:center;
+    gap:12px;
+    margin-bottom:8px;
   }
 
-  .rsc-topic-icon{
-    width:56px;
-    height:56px;
-    border-radius:16px;
+  .rsc-tool-icon{
+    width:44px;
+    height:44px;
+    border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:14px;
+    font-size:11px;
     font-weight:800;
     flex-shrink:0;
     color:var(--white);
   }
 
-  .rsc-topic-icon.share{
-    background: linear-gradient(135deg, rgba(228,0,70,0.3) 0%, rgba(255,20,147,0.3) 100%);
-    border:1px solid rgba(228,0,70,0.4);
-  }
+  .rsc-tool-icon.trend{ background: linear-gradient(135deg, rgba(99,102,241,0.4) 0%, rgba(168,85,247,0.4) 100%); border:1px solid rgba(99,102,241,0.5); }
+  .rsc-tool-icon.drivers{ background: linear-gradient(135deg, rgba(34,197,94,0.4) 0%, rgba(16,185,129,0.4) 100%); border:1px solid rgba(34,197,94,0.5); }
+  .rsc-tool-icon.breakout{ background: linear-gradient(135deg, rgba(251,146,60,0.4) 0%, rgba(234,88,12,0.4) 100%); border:1px solid rgba(251,146,60,0.5); }
+  .rsc-tool-icon.pricing{ background: linear-gradient(135deg, rgba(228,0,70,0.4) 0%, rgba(255,20,147,0.4) 100%); border:1px solid rgba(228,0,70,0.5); }
 
-  .rsc-topic-icon.drivers{
-    background: linear-gradient(135deg, rgba(34,197,94,0.3) 0%, rgba(16,185,129,0.3) 100%);
-    border:1px solid rgba(34,197,94,0.4);
-  }
-
-  .rsc-topic-icon.trends{
-    background: linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(168,85,247,0.3) 100%);
-    border:1px solid rgba(99,102,241,0.4);
-  }
-
-  .rsc-topic-title{
-    margin:0 0 6px 0;
-    font-size:20px;
+  .rsc-tool-title{
+    margin:0;
+    font-size:16px;
     font-weight:800;
     color:var(--white);
-    letter-spacing:-0.02em;
+    letter-spacing:-0.01em;
   }
 
-  .rsc-topic-subtitle{
+  .rsc-tool-desc{
     margin:0;
-    font-size:13px;
-    color:rgba(255,255,255,0.5);
-    font-weight:600;
+    font-size:12px;
+    line-height:1.5;
+    color:rgba(255,255,255,0.6);
   }
 
-  .rsc-topic-desc{
-    margin:0 0 20px 0;
-    font-size:14px;
-    line-height:1.65;
-    color:rgba(255,255,255,0.7);
+  .rsc-tool-arrow{
+    position:absolute;
+    right:16px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:18px;
+    color:rgba(255,255,255,0.3);
+    transition: transform .2s ease, color .2s ease;
   }
 
-  .rsc-topic-tags{
+  .rsc-tool:hover .rsc-tool-arrow{
+    color:rgba(255,255,255,0.6);
+  }
+
+  .rsc-tool.active .rsc-tool-arrow{
+    transform:translateY(-50%) rotate(90deg);
+    color:var(--brand-primary);
+  }
+
+  /* Expandable Panel */
+  .rsc-panel{
+    display:none;
+    background: var(--glass-2);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:16px;
+    padding:20px;
+    margin-top:12px;
+    animation: slideDown .3s ease;
+  }
+
+  .rsc-panel.show{
+    display:block;
+  }
+
+  @keyframes slideDown {
+    from { opacity:0; transform:translateY(-10px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  .rsc-panel-tabs{
     display:flex;
-    flex-wrap:wrap;
     gap:8px;
-    margin-bottom:20px;
+    margin-bottom:16px;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+    padding-bottom:12px;
   }
 
-  .rsc-tag{
-    padding:5px 12px;
+  .rsc-panel-tab{
+    padding:8px 16px;
     border-radius:20px;
     font-size:12px;
     font-weight:700;
+    color:rgba(255,255,255,0.6);
+    background:transparent;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition: all .2s ease;
   }
 
-  .rsc-tag.pink{ background:rgba(228,0,70,0.2); color:#ff6b9d; }
-  .rsc-tag.green{ background:rgba(34,197,94,0.2); color:#86efac; }
-  .rsc-tag.blue{ background:rgba(99,102,241,0.2); color:#a5b4fc; }
-  .rsc-tag.orange{ background:rgba(251,146,60,0.2); color:#fdba74; }
-
-  .rsc-cta{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    color:var(--brand-primary);
-    font-weight:800;
-    font-size:13px;
-    letter-spacing:0.02em;
-    text-transform:uppercase;
-    transition: gap .2s ease;
+  .rsc-panel-tab:hover{
+    background:rgba(255,255,255,0.08);
+    color:var(--white);
   }
 
-  .rsc-topic:hover .rsc-cta{
-    gap:12px;
+  .rsc-panel-tab.active{
+    background:rgba(228,0,70,0.2);
     color:#ff6b9d;
+    border-color:rgba(228,0,70,0.3);
   }
 
+  .rsc-panel-content{
+    display:none;
+  }
+
+  .rsc-panel-content.show{
+    display:block;
+  }
+
+  .rsc-questions{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .rsc-question{
+    padding:12px 16px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.85);
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    transition: all .2s ease;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .rsc-question:hover{
+    background:rgba(228,0,70,0.15);
+    border-color:rgba(228,0,70,0.3);
+    color:var(--white);
+  }
+
+  .rsc-question-icon{
+    font-size:14px;
+  }
+
+  /* Data Sources */
   .rsc-data{
     background: var(--glass-light);
-    border-radius:24px;
+    border-radius:20px;
     box-shadow: var(--shadow-light);
-    padding:28px;
+    padding:24px;
     margin-top:8px;
   }
 
@@ -276,14 +337,14 @@
     display:flex;
     align-items:flex-end;
     justify-content:space-between;
-    margin-bottom:20px;
-    padding-bottom:16px;
+    margin-bottom:16px;
+    padding-bottom:12px;
     border-bottom:1px solid rgba(0,0,0,0.06);
   }
 
   .rsc-data-header h2{
     margin:0;
-    font-size:22px;
+    font-size:18px;
     font-weight:900;
     color:var(--ink);
     letter-spacing:-0.02em;
@@ -291,7 +352,7 @@
 
   .rsc-data-header p{
     margin:0;
-    font-size:13px;
+    font-size:12px;
     color:var(--muted);
     font-weight:600;
   }
@@ -299,14 +360,14 @@
   .rsc-datasets{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
-    gap:16px;
+    gap:14px;
   }
 
   .rsc-dataset{
     background:#fafafa;
     border:1px solid rgba(0,0,0,0.06);
-    border-radius:16px;
-    padding:20px;
+    border-radius:14px;
+    padding:16px;
     transition: all .2s ease;
   }
 
@@ -318,18 +379,18 @@
   .rsc-dataset-header{
     display:flex;
     align-items:center;
-    gap:12px;
-    margin-bottom:16px;
+    gap:10px;
+    margin-bottom:12px;
   }
 
   .rsc-dataset-icon{
-    width:40px;
-    height:40px;
-    border-radius:10px;
+    width:36px;
+    height:36px;
+    border-radius:8px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:12px;
+    font-size:10px;
     font-weight:800;
     color:var(--white);
   }
@@ -340,20 +401,20 @@
 
   .rsc-dataset-name{
     margin:0;
-    font-size:15px;
+    font-size:14px;
     font-weight:800;
     color:var(--ink);
   }
 
   .rsc-dataset-sub{
     margin:2px 0 0 0;
-    font-size:11px;
+    font-size:10px;
     color:var(--muted);
     font-weight:600;
   }
 
   .rsc-metric-section{
-    margin-bottom:12px;
+    margin-bottom:10px;
   }
 
   .rsc-metric-section:last-child{
@@ -361,24 +422,24 @@
   }
 
   .rsc-metric-label{
-    font-size:10px;
+    font-size:9px;
     font-weight:800;
     letter-spacing:0.08em;
     text-transform:uppercase;
     color:var(--muted);
-    margin-bottom:6px;
+    margin-bottom:5px;
   }
 
   .rsc-metric-list{
     display:flex;
     flex-wrap:wrap;
-    gap:5px;
+    gap:4px;
   }
 
   .rsc-metric-pill{
-    padding:3px 8px;
-    border-radius:5px;
-    font-size:10px;
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:9px;
     font-weight:700;
     background:rgba(0,0,0,0.04);
     color:#374151;
@@ -386,28 +447,63 @@
 
   .rsc-footer{
     text-align:center;
-    padding:24px 20px 32px;
+    padding:20px 20px 28px;
   }
 
   .rsc-footer img{
-    height:28px;
+    height:24px;
     opacity:0.6;
   }
 
   @media (max-width:1000px){
-    .rsc-topics{ grid-template-columns:1fr; }
+    .rsc-tools{ grid-template-columns:repeat(2, 1fr); }
     .rsc-datasets{ grid-template-columns:1fr; }
   }
 
   @media (max-width:640px){
-    .rsc-hero h1{ font-size:28px; }
-    .rsc-topic{ padding:20px; }
+    .rsc-hero h1{ font-size:26px; }
+    .rsc-tools{ grid-template-columns:1fr; }
+    .rsc-tool{ padding:16px; }
   }
 </style>
 
 <script>
   function rscAsk(question){
     window.parent.postMessage({ askQuestion: question }, '*');
+  }
+
+  function toggleTool(toolId){
+    const tools = document.querySelectorAll('.rsc-tool');
+    const panels = document.querySelectorAll('.rsc-panel');
+    const clickedTool = document.getElementById('tool-' + toolId);
+    const clickedPanel = document.getElementById('panel-' + toolId);
+
+    const wasActive = clickedTool.classList.contains('active');
+
+    // Close all
+    tools.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('show'));
+
+    // Open clicked if it wasn't already open
+    if(!wasActive){
+      clickedTool.classList.add('active');
+      clickedPanel.classList.add('show');
+      // Show first tab by default
+      showTab(toolId, 0);
+    }
+  }
+
+  function showTab(toolId, tabIndex){
+    const panel = document.getElementById('panel-' + toolId);
+    const tabs = panel.querySelectorAll('.rsc-panel-tab');
+    const contents = panel.querySelectorAll('.rsc-panel-content');
+
+    tabs.forEach((t, i) => {
+      t.classList.toggle('active', i === tabIndex);
+    });
+    contents.forEach((c, i) => {
+      c.classList.toggle('show', i === tabIndex);
+    });
   }
 </script>
 
@@ -416,8 +512,8 @@
     <div class="rsc-hero-top">
       <img class="rsc-logo-img" src="https://info.answerrocket.com/hubfs/poc/reckit_long.png" alt="Reckitt" />
     </div>
-    <h1>Surface Care <span class="highlight">Intelligence</span></h1>
-    <p>Analyze Lysol market performance, understand revenue drivers, and track household penetration across the US Surface Care category.</p>
+    <h1>Welcome to <span class="highlight">Max</span>, your <span class="highlight">Brand Planning Agent</span></h1>
+    <p>Analyze Lysol market performance, understand revenue drivers, and track competitive positioning across US Surface Care.</p>
   </div>
 
   <div class="rsc-content">
@@ -425,58 +521,162 @@
 
       <div class="rsc-section-label"><span>Analytics Tools</span></div>
 
-      <div class="rsc-topics">
+      <div class="rsc-tools">
 
-        <div class="rsc-topic" onclick="rscAsk('Is Lysol gaining or losing share in Surface Care? Against which competitors?')">
-          <div class="rsc-topic-header">
-            <div class="rsc-topic-icon share">MSA</div>
+        <!-- TREND ANALYSIS -->
+        <div class="rsc-tool" id="tool-trend" onclick="toggleTool('trend')">
+          <div class="rsc-tool-header">
+            <div class="rsc-tool-icon trend">TRD</div>
             <div>
-              <h2 class="rsc-topic-title">Market Share Analysis</h2>
-              <p class="rsc-topic-subtitle">Competitive positioning</p>
+              <h2 class="rsc-tool-title">Trend Analysis</h2>
+              <p class="rsc-tool-desc">Track metrics over time</p>
             </div>
           </div>
-          <p class="rsc-topic-desc">Track Lysol market share trends and competitive dynamics in Surface Care. Identify which competitors are gaining or losing ground by segment and retailer.</p>
-          <div class="rsc-topic-tags">
-            <span class="rsc-tag pink">Value Share</span>
-            <span class="rsc-tag green">Volume Share</span>
-          </div>
-          <div class="rsc-cta">Analyze Share &rarr;</div>
+          <span class="rsc-tool-arrow">›</span>
         </div>
 
-        <div class="rsc-topic" onclick="rscAsk('What is driving Net Revenue performance for Lysol this period vs last year?')">
-          <div class="rsc-topic-header">
-            <div class="rsc-topic-icon drivers">DRV</div>
+        <!-- DRIVER ANALYSIS -->
+        <div class="rsc-tool" id="tool-drivers" onclick="toggleTool('drivers')">
+          <div class="rsc-tool-header">
+            <div class="rsc-tool-icon drivers">DRV</div>
             <div>
-              <h2 class="rsc-topic-title">Revenue Drivers</h2>
-              <p class="rsc-topic-subtitle">Variance analysis</p>
+              <h2 class="rsc-tool-title">Driver Analysis</h2>
+              <p class="rsc-tool-desc">Understand variance drivers</p>
             </div>
           </div>
-          <p class="rsc-topic-desc">Understand what is driving revenue and margin changes. Break down performance by category, segment, and brand to identify growth contributors and detractors.</p>
-          <div class="rsc-topic-tags">
-            <span class="rsc-tag green">Net Revenue</span>
-            <span class="rsc-tag orange">Gross Margin</span>
-          </div>
-          <div class="rsc-cta">Analyze Drivers &rarr;</div>
+          <span class="rsc-tool-arrow">›</span>
         </div>
 
-        <div class="rsc-topic" onclick="rscAsk('Show me household penetration trend for Lysol over the past year.')">
-          <div class="rsc-topic-header">
-            <div class="rsc-topic-icon trends">TRD</div>
+        <!-- DIMENSION BREAKOUT -->
+        <div class="rsc-tool" id="tool-breakout" onclick="toggleTool('breakout')">
+          <div class="rsc-tool-header">
+            <div class="rsc-tool-icon breakout">DIM</div>
             <div>
-              <h2 class="rsc-topic-title">Penetration Trends</h2>
-              <p class="rsc-topic-subtitle">Panel data analysis</p>
+              <h2 class="rsc-tool-title">Dimension Breakout</h2>
+              <p class="rsc-tool-desc">Analyze by dimension</p>
             </div>
           </div>
-          <p class="rsc-topic-desc">Monitor household penetration and repeat purchase behavior over time. Compare Lysol reach against category and key competitors.</p>
-          <div class="rsc-topic-tags">
-            <span class="rsc-tag blue">Penetration %</span>
-            <span class="rsc-tag pink">Repeat Rate</span>
+          <span class="rsc-tool-arrow">›</span>
+        </div>
+
+        <!-- PRICING ANALYSIS -->
+        <div class="rsc-tool" id="tool-pricing" onclick="toggleTool('pricing')">
+          <div class="rsc-tool-header">
+            <div class="rsc-tool-icon pricing">PRC</div>
+            <div>
+              <h2 class="rsc-tool-title">Pricing Analysis</h2>
+              <p class="rsc-tool-desc">Price index & competition</p>
+            </div>
           </div>
-          <div class="rsc-cta">View Trends &rarr;</div>
+          <span class="rsc-tool-arrow">›</span>
         </div>
 
       </div>
 
+      <!-- TREND PANEL -->
+      <div class="rsc-panel" id="panel-trend">
+        <div class="rsc-panel-tabs">
+          <button class="rsc-panel-tab active" onclick="event.stopPropagation(); showTab('trend', 0)">Nielsen</button>
+          <button class="rsc-panel-tab" onclick="event.stopPropagation(); showTab('trend', 1)">Panel</button>
+          <button class="rsc-panel-tab" onclick="event.stopPropagation(); showTab('trend', 2)">Finance</button>
+        </div>
+        <div class="rsc-panel-content show">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show Lysol sales trend over the past 2 years in Total US xAOC')"><span class="rsc-question-icon">📈</span> Lysol sales trend - last 2 years</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('How is Lysol distribution trending vs prior year?')"><span class="rsc-question-icon">📊</span> Distribution trend vs prior year</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show me unit sales trend for Surface Care category by brand')"><span class="rsc-question-icon">📉</span> Category unit sales by brand</div>
+          </div>
+        </div>
+        <div class="rsc-panel-content">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show household penetration trend for Lysol over the past year')"><span class="rsc-question-icon">🏠</span> Lysol household penetration trend</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('How is Lysol repeat rate trending vs category?')"><span class="rsc-question-icon">🔄</span> Repeat rate trend vs category</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show buy rate trend for Lysol vs key competitors')"><span class="rsc-question-icon">🛒</span> Buy rate vs competitors</div>
+          </div>
+        </div>
+        <div class="rsc-panel-content">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show net revenue trend for Lysol by quarter')"><span class="rsc-question-icon">💰</span> Net revenue trend by quarter</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('How is gross margin trending for Surface Care?')"><span class="rsc-question-icon">📊</span> Gross margin trend</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRIVERS PANEL -->
+      <div class="rsc-panel" id="panel-drivers">
+        <div class="rsc-panel-tabs">
+          <button class="rsc-panel-tab active" onclick="event.stopPropagation(); showTab('drivers', 0)">Finance</button>
+          <button class="rsc-panel-tab" onclick="event.stopPropagation(); showTab('drivers', 1)">Nielsen CPG</button>
+        </div>
+        <div class="rsc-panel-content show">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is driving Net Revenue performance for Lysol this period vs last year?')"><span class="rsc-question-icon">📊</span> Net Revenue drivers vs prior year</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is driving Gross Margin variance for Surface Care Q2 2026?')"><span class="rsc-question-icon">💹</span> Gross Margin drivers - Q2 2026</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Break down revenue variance by category and segment')"><span class="rsc-question-icon">🔍</span> Revenue variance by category/segment</div>
+          </div>
+        </div>
+        <div class="rsc-panel-content">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is driving Lysol sales change vs prior year in Total US xAOC?')"><span class="rsc-question-icon">📈</span> Sales drivers vs prior year</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What factors are driving volume change for Lysol?')"><span class="rsc-question-icon">📦</span> Volume drivers analysis</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Break down sales variance by brand and segment')"><span class="rsc-question-icon">🔍</span> Variance by brand/segment</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BREAKOUT PANEL -->
+      <div class="rsc-panel" id="panel-breakout">
+        <div class="rsc-panel-tabs">
+          <button class="rsc-panel-tab active" onclick="event.stopPropagation(); showTab('breakout', 0)">Market Share</button>
+          <button class="rsc-panel-tab" onclick="event.stopPropagation(); showTab('breakout', 1)">Nielsen Metrics</button>
+          <button class="rsc-panel-tab" onclick="event.stopPropagation(); showTab('breakout', 2)">Panel Metrics</button>
+        </div>
+        <div class="rsc-panel-content show">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is Lysol market share in Q2 2026 in Total US xAOC?')"><span class="rsc-question-icon">🥧</span> Lysol market share - Q2 2026</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Is Lysol gaining or losing share vs competitors?')"><span class="rsc-question-icon">⚔️</span> Share vs competitors</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show market share by segment for Surface Care')"><span class="rsc-question-icon">📊</span> Share by segment</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Which retailers is Lysol gaining share in?')"><span class="rsc-question-icon">🏪</span> Share by retailer</div>
+          </div>
+        </div>
+        <div class="rsc-panel-content">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show Lysol value sales breakout by segment')"><span class="rsc-question-icon">💵</span> Sales by segment</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is Lysol distribution by retailer?')"><span class="rsc-question-icon">🏬</span> Distribution by retailer</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show promo sales percentage by brand')"><span class="rsc-question-icon">🏷️</span> Promo sales by brand</div>
+          </div>
+        </div>
+        <div class="rsc-panel-content">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show household penetration by brand for Surface Care')"><span class="rsc-question-icon">🏠</span> Penetration by brand</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is repeat rate breakout by channel?')"><span class="rsc-question-icon">🔄</span> Repeat rate by channel</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRICING PANEL -->
+      <div class="rsc-panel" id="panel-pricing">
+        <div class="rsc-panel-tabs">
+          <button class="rsc-panel-tab active" onclick="event.stopPropagation(); showTab('pricing', 0)">Price Index</button>
+          <button class="rsc-panel-tab" onclick="event.stopPropagation(); showTab('pricing', 1)">Competitive Threats</button>
+        </div>
+        <div class="rsc-panel-content show">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is Lysol price index vs category average in Q2 2026?')"><span class="rsc-question-icon">💲</span> Lysol price index - Q2 2026</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('How is Lysol price index trending over time?')"><span class="rsc-question-icon">📈</span> Price index trend</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Is Lysol gaining or losing price premium?')"><span class="rsc-question-icon">⬆️</span> Price premium analysis</div>
+          </div>
+        </div>
+        <div class="rsc-panel-content">
+          <div class="rsc-questions">
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Which competitors are cutting prices and gaining volume?')"><span class="rsc-question-icon">⚠️</span> Competitors cutting prices</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('Show me the competitive threat matrix for Surface Care')"><span class="rsc-question-icon">🎯</span> Competitive threat matrix</div>
+            <div class="rsc-question" onclick="event.stopPropagation(); rscAsk('What is the price gap between Lysol and private label?')"><span class="rsc-question-icon">📏</span> Price gap vs private label</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA SOURCES -->
       <div class="rsc-data">
         <div class="rsc-data-header">
           <div>
@@ -489,35 +689,33 @@
 
           <div class="rsc-dataset">
             <div class="rsc-dataset-header">
-              <div class="rsc-dataset-icon finance">P&L</div>
+              <div class="rsc-dataset-icon finance">FIN</div>
               <div>
                 <h3 class="rsc-dataset-name">Finance Data</h3>
-                <p class="rsc-dataset-sub">Internal P&L extract</p>
+                <p class="rsc-dataset-sub">Internal P&amp;L extract</p>
               </div>
             </div>
             <div class="rsc-metric-section">
               <div class="rsc-metric-label">Metrics</div>
               <div class="rsc-metric-list">
-                <span class="rsc-metric-pill">gross_sales</span>
-                <span class="rsc-metric-pill">net_revenue</span>
-                <span class="rsc-metric-pill">gross_margin</span>
+                <span class="rsc-metric-pill">gross sales</span>
+                <span class="rsc-metric-pill">net revenue</span>
+                <span class="rsc-metric-pill">gross margin</span>
               </div>
             </div>
             <div class="rsc-metric-section">
               <div class="rsc-metric-label">Dimensions</div>
               <div class="rsc-metric-list">
-                <span class="rsc-metric-pill">power_brand</span>
+                <span class="rsc-metric-pill">power brand</span>
                 <span class="rsc-metric-pill">category</span>
-                <span class="rsc-metric-pill">sub_category</span>
                 <span class="rsc-metric-pill">segment</span>
-                <span class="rsc-metric-pill">fiscal_period</span>
               </div>
             </div>
           </div>
 
           <div class="rsc-dataset">
             <div class="rsc-dataset-header">
-              <div class="rsc-dataset-icon panel">HH</div>
+              <div class="rsc-dataset-icon panel">PNL</div>
               <div>
                 <h3 class="rsc-dataset-name">Panel Data</h3>
                 <p class="rsc-dataset-sub">Household panel metrics</p>
@@ -526,39 +724,37 @@
             <div class="rsc-metric-section">
               <div class="rsc-metric-label">Metrics</div>
               <div class="rsc-metric-list">
-                <span class="rsc-metric-pill">household_penetration</span>
-                <span class="rsc-metric-pill">repeat_rate</span>
-                <span class="rsc-metric-pill">buy_rate</span>
+                <span class="rsc-metric-pill">penetration</span>
+                <span class="rsc-metric-pill">repeat rate</span>
+                <span class="rsc-metric-pill">buy rate</span>
               </div>
             </div>
             <div class="rsc-metric-section">
               <div class="rsc-metric-label">Dimensions</div>
               <div class="rsc-metric-list">
-                <span class="rsc-metric-pill">parent_brand</span>
-                <span class="rsc-metric-pill">category</span>
                 <span class="rsc-metric-pill">brand</span>
+                <span class="rsc-metric-pill">category</span>
                 <span class="rsc-metric-pill">channel</span>
-                <span class="rsc-metric-pill">quarter</span>
               </div>
             </div>
           </div>
 
           <div class="rsc-dataset">
             <div class="rsc-dataset-header">
-              <div class="rsc-dataset-icon nielsen">xAoC</div>
+              <div class="rsc-dataset-icon nielsen">NIQ</div>
               <div>
-                <h3 class="rsc-dataset-name">Nielsen Syndicated</h3>
-                <p class="rsc-dataset-sub">xAoC star schema</p>
+                <h3 class="rsc-dataset-name">Nielsen xAoC</h3>
+                <p class="rsc-dataset-sub">Syndicated scanner data</p>
               </div>
             </div>
             <div class="rsc-metric-section">
               <div class="rsc-metric-label">Metrics</div>
               <div class="rsc-metric-list">
-                <span class="rsc-metric-pill">value_sales</span>
-                <span class="rsc-metric-pill">unit_sales</span>
-                <span class="rsc-metric-pill">volume_sales</span>
-                <span class="rsc-metric-pill">acv</span>
-                <span class="rsc-metric-pill">tdp</span>
+                <span class="rsc-metric-pill">sales</span>
+                <span class="rsc-metric-pill">units</span>
+                <span class="rsc-metric-pill">distribution</span>
+                <span class="rsc-metric-pill">price</span>
+                <span class="rsc-metric-pill">promo</span>
               </div>
             </div>
             <div class="rsc-metric-section">
@@ -567,8 +763,7 @@
                 <span class="rsc-metric-pill">brand</span>
                 <span class="rsc-metric-pill">segment</span>
                 <span class="rsc-metric-pill">retailer</span>
-                <span class="rsc-metric-pill">channel</span>
-                <span class="rsc-metric-pill">week</span>
+                <span class="rsc-metric-pill">market</span>
               </div>
             </div>
           </div>
