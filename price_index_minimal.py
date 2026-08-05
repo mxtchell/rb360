@@ -38,9 +38,13 @@ def build_filter_clause(filters):
     if not filters:
         return ""
 
-    # Dimensions that come from product table
-    product_dims = {'BRAND', 'MARKET', 'CATEGORY', 'SUBCATEGORY', 'SUB_CATEGORY',
-                    'SEGMENT', 'MANUFACTURER', 'ITEM_CODE', 'UPC', 'PRODUCT_TAG'}
+    # Dimensions that come from product table (p.)
+    product_dims = {'BRAND', 'CATEGORY', 'SUBCATEGORY', 'SUB_CATEGORY', 'SEGMENT',
+                    'MANUFACTURER', 'ITEM_CODE', 'UPC', 'PRODUCT_TAG'}
+
+    # Dimensions that come from market table (m.)
+    market_dims = {'MARKET', 'MARKET_NAME_LONG', 'MARKET_NAME_SHORT', 'NIELSEN_RETAILER',
+                   'CHANNEL', 'SUB_CHANNEL', 'MARKET_TYPE', 'MARKET_TAG'}
 
     clauses = []
     for f in filters:
@@ -51,6 +55,8 @@ def build_filter_clause(filters):
             dim_upper = dim.upper()
             if dim_upper in product_dims:
                 col_ref = f"p.{dim}"
+            elif dim_upper in market_dims:
+                col_ref = f"m.{dim}"
             else:
                 col_ref = f"f.{dim}"
 
@@ -77,6 +83,8 @@ def query_data(client, database_id, filters=None):
     FROM poc_analytics.reckitt.nielsen_fact AS f
     LEFT JOIN poc_analytics.reckitt.nielsen_product AS p
         ON f.PRODUCT_TAG = p.ITEM_CODE
+    LEFT JOIN poc_analytics.reckitt.nielsen_market AS m
+        ON f.MARKET_TAG = m.MARKET_TAG
     WHERE 1=1
     {where_clause}
     GROUP BY p.BRAND, f.week_ending_date
@@ -485,27 +493,66 @@ def price_index_minimal(parameters: SkillInput):
     brand_data = brand_data.sort_values('period')
     latest = brand_data.iloc[-1]
     earliest = brand_data.iloc[0]
-    current_index = latest['price_index']
-    index_change = current_index - earliest['price_index']
+    current_index = float(latest['price_index'])
+    index_change = current_index - float(earliest['price_index'])
+    category_avg_price = float(latest['category_avg_price'])
+    brand_avg_price = float(latest['avg_price'])
 
     # Build narrative
     direction = "above" if current_index > 100 else "below"
     change_dir = "increased" if index_change > 0 else "decreased"
 
-    narrative = f"""## {target_brand} Price Index Analysis
+    # Calculate competitor metrics for insights
+    competitor_metrics_for_insight = calculate_competitor_metrics(df)
+    competitor_metrics_for_insight = competitor_metrics_for_insight[competitor_metrics_for_insight['current_share'] >= 1.0]
+    competitor_metrics_for_insight = competitor_metrics_for_insight.sort_values('threat_score', ascending=False)
+
+    # Build facts for LLM
+    top_threats_text = []
+    for _, row in competitor_metrics_for_insight.head(3).iterrows():
+        threat_level = "HIGH THREAT" if (row['volume_growth'] > 0 and row['price_change'] <= 0) else ("WATCH" if row['volume_growth'] > 0 else "DECLINING")
+        top_threats_text.append(f"- {row['BRAND']}: {threat_level}, Vol {row['volume_growth']:+.1f}%, Price {row['price_change']:+.1f}%, Share {row['current_share']:.1f}%")
+
+    facts = f"""Brand: {target_brand}
+Current Price Index: {current_index:.1f} ({direction} category avg of 100)
+Index Change: {index_change:+.1f} pts over period
+Brand Avg Price: ${brand_avg_price:.2f}
+Category Avg Price: ${category_avg_price:.2f}
+Top Competitor Threats:
+{chr(10).join(top_threats_text) if top_threats_text else 'No significant threats identified'}"""
+
+    # Generate LLM insights
+    try:
+        if ArUtils:
+            ar_utils = ArUtils()
+            insight_prompt = f"""Analyze this price index data and provide strategic insights in 3-4 sentences:
+
+{facts}
+
+Focus on: Is the brand maintaining premium positioning? Are competitors threatening with price cuts? What's the recommended action?"""
+
+            narrative = ar_utils.llm_call(insight_prompt)
+        else:
+            narrative = f"""## {target_brand} Price Index Analysis
 
 **Current Price Index:** {current_index:.1f} ({direction} category average of 100)
 
 **Change over period:** {index_change:+.1f} pts ({change_dir})
 
-The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price.
-"""
+The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price."""
+    except Exception as e:
+        logger.warning(f"LLM call failed: {e}")
+        narrative = f"""## {target_brand} Price Index Analysis
+
+**Current Price Index:** {current_index:.1f} ({direction} category average of 100)
+
+**Change over period:** {index_change:+.1f} pts ({change_dir})
+
+The price index measures {target_brand}'s average price relative to the category average, where 100 represents the category average price."""
 
     # Build visualization data
     periods = [str(p) for p in brand_data['period'].tolist()]
     index_values = [float(v) for v in brand_data['price_index'].round(1).tolist()]
-    category_avg_price = float(latest['category_avg_price'])
-    brand_avg_price = float(latest['avg_price'])
 
     # KPI color based on change direction
     change_color = "#22c55e" if index_change > 0 else "#ef4444"
@@ -618,23 +665,24 @@ The price index measures {target_brand}'s average price relative to the category
             "threat_icon": threat_icon
         })
 
+    # Build threat summary text for display
+    threat_summary_items = []
+    for row in threat_rows[:5]:
+        icon = "🔴" if row["threat_icon"] == "red" else ("🟡" if row["threat_icon"] == "yellow" else "🟢")
+        threat_summary_items.append({
+            "name": f"Threat_{row['brand'][:10]}",
+            "type": "Paragraph",
+            "text": f"{icon} **{row['brand']}**: Sales {row['curr_sales']} ({row['sales_chg']}), Share {row['share']} ({row['share_chg']}), Vol {row['vol_chg']}, Price {row['price_chg']}",
+            "style": {"fontSize": "13px", "marginBottom": "8px", "padding": "10px", "backgroundColor": "#f8fafc", "borderRadius": "6px"}
+        })
+
     threat_layout = {
         "type": "Document",
         "style": {"padding": "20px", "gap": "20px"},
         "children": [
             {"name": "BubbleChart", "type": "HighchartsChart", "minHeight": "450px", "options": bubble_chart},
-            {"name": "TableTitle", "type": "Header", "text": "Top 5 Competitor Threats", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px"}},
-            {"name": "ThreatTable", "type": "DataTable", "columns": [
-                {"field": "brand", "headerName": "Brand"},
-                {"field": "curr_sales", "headerName": "Current $"},
-                {"field": "sales_chg", "headerName": "$ Chg"},
-                {"field": "share", "headerName": "Share"},
-                {"field": "share_chg", "headerName": "Shr Chg"},
-                {"field": "vol_chg", "headerName": "Vol Chg"},
-                {"field": "price_chg", "headerName": "Prc Chg"},
-                {"field": "threat_icon", "headerName": "Threat"}
-            ], "data": threat_rows}
-        ]
+            {"name": "TableTitle", "type": "Header", "text": "Top 5 Competitor Threats", "style": {"fontSize": "18px", "fontWeight": "bold", "marginTop": "20px", "marginBottom": "15px"}}
+        ] + threat_summary_items
     }
 
     threat_viz = SkillVisualization(
