@@ -146,7 +146,8 @@ def query_data(client, database_id, filters=None, start_date=None, end_date=None
         p.BRAND,
         f.week_ending_date,
         SUM(f.TOTAL_VALUE_SALES) as total_sales,
-        SUM(f.TOTAL_UNIT_SALES) as total_units
+        SUM(f.TOTAL_UNIT_SALES) as total_units,
+        SUM(f.TOTAL_VOLUME_SALES) as total_volume
     FROM poc_analytics.reckitt.nielsen_fact AS f
     LEFT JOIN poc_analytics.reckitt.nielsen_product AS p
         ON f.PRODUCT_TAG = p.ITEM_CODE
@@ -188,13 +189,17 @@ def calculate_competitor_metrics(current_df, prior_df):
 
     # Aggregate by brand for each period
     def agg_period(period_df):
-        return period_df.groupby('BRAND').agg({
+        agg_dict = {
             'total_sales': 'sum',
             'total_units': 'sum'
-        }).reset_index()
+        }
+        # Include volume if available
+        if 'total_volume' in period_df.columns:
+            agg_dict['total_volume'] = 'sum'
+        return period_df.groupby('BRAND').agg(agg_dict).reset_index()
 
     current_agg = agg_period(current_df)
-    prior_agg = agg_period(prior_df) if not prior_df.empty else pd.DataFrame(columns=['BRAND', 'total_sales', 'total_units'])
+    prior_agg = agg_period(prior_df) if not prior_df.empty else pd.DataFrame(columns=['BRAND', 'total_sales', 'total_units', 'total_volume'])
 
     # Calculate totals for share
     current_total_sales = current_agg['total_sales'].sum()
@@ -208,7 +213,11 @@ def calculate_competitor_metrics(current_df, prior_df):
     metrics['prior_price'] = metrics['total_sales_prior'] / metrics['total_units_prior'].replace(0, np.nan)
     metrics['price_change'] = ((metrics['current_price'] - metrics['prior_price']) / metrics['prior_price'].replace(0, np.nan) * 100).fillna(0)
 
-    metrics['volume_growth'] = ((metrics['total_units_curr'] - metrics['total_units_prior']) / metrics['total_units_prior'].replace(0, np.nan) * 100).fillna(0)
+    # Use actual volume sales if available, otherwise fall back to units
+    if 'total_volume_curr' in metrics.columns and 'total_volume_prior' in metrics.columns:
+        metrics['volume_growth'] = ((metrics['total_volume_curr'] - metrics['total_volume_prior']) / metrics['total_volume_prior'].replace(0, np.nan) * 100).fillna(0)
+    else:
+        metrics['volume_growth'] = ((metrics['total_units_curr'] - metrics['total_units_prior']) / metrics['total_units_prior'].replace(0, np.nan) * 100).fillna(0)
     metrics['sales_growth'] = ((metrics['total_sales_curr'] - metrics['total_sales_prior']) / metrics['total_sales_prior'].replace(0, np.nan) * 100).fillna(0)
 
     metrics['current_share'] = (metrics['total_sales_curr'] / current_total_sales * 100) if current_total_sales > 0 else 0
