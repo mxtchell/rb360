@@ -531,7 +531,6 @@ PRICE_INDEX_LAYOUT = """
         ),
         SkillParameter(
             name="nielsen_retailer",
-            constrained_to="dimensions",
             default_value="Total US xAOC",
             description="Nielsen retailer/market to analyze. Defaults to Total US xAOC unless user specifies otherwise."
         ),
