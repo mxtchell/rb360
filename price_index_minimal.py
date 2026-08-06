@@ -159,6 +159,8 @@ def query_data(client, database_id, filters=None, start_date=None, end_date=None
     ORDER BY f.week_ending_date
     """
 
+    logger.info(f"Executing SQL query:\n{query}")
+
     result = client.data.execute_sql_query(
         database_id=database_id,
         sql_query=query,
@@ -575,7 +577,9 @@ def price_index_minimal(parameters: SkillInput):
     other_filters = getattr(parameters.arguments, 'other_filters', []) or []
 
     # Add nielsen_retailer filter
-    other_filters.append({"column": "nielsen_retailer", "values": [nielsen_retailer]})
+    other_filters.append({"dim": "nielsen_retailer", "val": [nielsen_retailer]})
+
+    logger.info(f"Filters being applied: {other_filters}")
     max_prompt = getattr(parameters.arguments, 'max_prompt', "Answer user question in 30 words or less using following facts:\n{{facts}}")
     insight_prompt = getattr(parameters.arguments, 'insight_prompt', """Analyze this pricing data and provide strategic insights:
 
