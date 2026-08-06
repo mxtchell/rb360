@@ -530,10 +530,16 @@ PRICE_INDEX_LAYOUT = """
             description="Time period to analyze"
         ),
         SkillParameter(
+            name="nielsen_retailer",
+            constrained_to="dimensions",
+            default_value="Total US xAOC",
+            description="Nielsen retailer/market to analyze. Defaults to Total US xAOC unless user specifies otherwise."
+        ),
+        SkillParameter(
             name="other_filters",
             constrained_to="filters",
             is_multi=True,
-            description="Additional filters"
+            description="Additional filters (brand, category, etc.)"
         ),
         SkillParameter(
             name="max_prompt",
@@ -566,7 +572,11 @@ def price_index_minimal(parameters: SkillInput):
     target_brand = getattr(parameters.arguments, 'target_brand', 'LYSOL') or 'LYSOL'
     time_granularity = getattr(parameters.arguments, 'time_granularity', 'month') or 'month'
     period = getattr(parameters.arguments, 'period', 'last 52 weeks')
+    nielsen_retailer = getattr(parameters.arguments, 'nielsen_retailer', 'Total US xAOC') or 'Total US xAOC'
     other_filters = getattr(parameters.arguments, 'other_filters', []) or []
+
+    # Add nielsen_retailer filter
+    other_filters.append({"column": "nielsen_retailer", "values": [nielsen_retailer]})
     max_prompt = getattr(parameters.arguments, 'max_prompt', "Answer user question in 30 words or less using following facts:\n{{facts}}")
     insight_prompt = getattr(parameters.arguments, 'insight_prompt', """Analyze this pricing data and provide strategic insights:
 
