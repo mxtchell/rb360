@@ -1,6 +1,5 @@
 from __future__ import annotations
 from types import SimpleNamespace
-import os
 
 import pandas as pd
 from skill_framework import SkillInput, SkillVisualization, skill, SkillParameter, SkillOutput, ParameterDisplayDescription
@@ -22,15 +21,7 @@ def get_cpg_metric_groups():
     """Get cpg_metric_groups from dataset misc_info."""
     try:
         ar_utils = ArUtils()
-        dataset_id = ar_utils.sp.data.dataset_id
-        logger.info(f"Dataset ID from sp: {dataset_id}")
-
-        if not dataset_id:
-            logger.warning("No dataset_id found")
-            return {}
-
-        dataset = ar_utils.ar_client.data.get_dataset(dataset_id)
-        misc_info = json.loads(dataset.misc_info) if dataset.misc_info else {}
+        misc_info = ar_utils.dataset_metadata.get("misc_info", {})
         cpg_groups = misc_info.get('cpg_metric_groups', {})
         logger.info(f"cpg_metric_groups keys: {list(cpg_groups.keys()) if cpg_groups else 'None'}")
         return cpg_groups
