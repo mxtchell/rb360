@@ -9,6 +9,8 @@ from skill_framework.layouts import wire_layout
 
 from ar_analytics import DriverAnalysis, DriverAnalysisTemplateParameterSetup, ArUtils
 from ar_analytics.defaults import metric_driver_analysis_config, default_table_layout, get_table_layout_vars
+from ar_analytics.helpers.utils import get_dataset_id
+from answer_rocket import AnswerRocketClient
 
 import jinja2
 import logging
@@ -20,14 +22,70 @@ logger = logging.getLogger(__name__)
 def get_cpg_metric_groups():
     """Get cpg_metric_groups from dataset misc_info."""
     try:
-        ar_utils = ArUtils()
-        misc_info = ar_utils.dataset_metadata.get("misc_info", {})
+        dataset_id = get_dataset_id()
+        client = AnswerRocketClient()
+        dataset = client.data.get_dataset(dataset_id=dataset_id)
+
+        # Try multiple ways to access misc_info
+        misc_info = {}
+        if hasattr(dataset, 'misc_info') and dataset.misc_info:
+            misc_info = dataset.misc_info
+            logger.info(f"Got misc_info from dataset.misc_info: {type(misc_info)}")
+        elif hasattr(dataset, 'get_metadata'):
+            metadata = dataset.get_metadata()
+            misc_info = metadata.get('misc_info', {}) if metadata else {}
+            logger.info(f"Got misc_info from get_metadata(): {type(misc_info)}")
+
+        # Handle if misc_info is a string (JSON)
+        if isinstance(misc_info, str):
+            try:
+                misc_info = json.loads(misc_info)
+            except:
+                misc_info = {}
+
         cpg_groups = misc_info.get('cpg_metric_groups', {})
         logger.info(f"cpg_metric_groups keys: {list(cpg_groups.keys()) if cpg_groups else 'None'}")
         return cpg_groups
+
     except Exception as e:
         logger.warning(f"Failed to get cpg_metric_groups: {e}")
         return {}
+
+
+def filter_driver_metrics_by_group(current_metric, driver_metrics, cpg_metric_groups):
+    """Filter driver_metrics based on cpg_metric_groups (dict of named groups)."""
+    if not current_metric or not cpg_metric_groups or not driver_metrics:
+        return driver_metrics
+
+    # Find which group the current metric belongs to
+    target_group = None
+    current_metric_lower = current_metric.lower()
+    for group_name, metrics in cpg_metric_groups.items():
+        metrics_lower = [m.lower() for m in metrics]
+        if current_metric_lower in metrics_lower:
+            target_group = [m.lower() for m in metrics]
+            logger.info(f"Found metric '{current_metric}' in group '{group_name}': {metrics}")
+            break
+
+    if not target_group:
+        logger.info(f"Metric '{current_metric}' not found in any cpg_metric_group")
+        return driver_metrics
+
+    # Filter driver_metrics to only include metrics from the target group
+    filtered_metrics = []
+    for item in driver_metrics:
+        metric_name = item.get('metric', '').lower()
+        peers = item.get('peer_metrics') or []
+
+        if metric_name in target_group:
+            filtered_item = item.copy()
+            # Filter peers to only those in the group
+            if peers:
+                filtered_item['peer_metrics'] = [p for p in peers if p.lower() in target_group]
+            filtered_metrics.append(filtered_item)
+
+    logger.info(f"Filtered driver_metrics to: {[m['metric'] for m in filtered_metrics]}")
+    return filtered_metrics
 
 
 def find_metric_group(metric: str, cpg_metric_groups: dict) -> list:
@@ -129,53 +187,20 @@ def nielsen_drivers(parameters: SkillInput):
         if hasattr(parameters.arguments, key) and getattr(parameters.arguments, key) is not None:
             param_dict[key] = getattr(parameters.arguments, key)
 
-    # Get cpg_metric_groups and build peer_metrics for the requested metric
-    cpg_metric_groups = get_cpg_metric_groups()
     requested_metric = param_dict.get("metric", "")
-    cpg_peer_metrics = None  # Store locally, don't rely on env
-
-    if cpg_metric_groups and requested_metric:
-        cpg_peer_metrics = build_peer_metrics(requested_metric, cpg_metric_groups)
-        logger.info(f"Using cpg_metric_groups - metric: {requested_metric}, peers: {cpg_peer_metrics}")
-    else:
-        logger.info(f"No cpg_metric_groups found - using default metric_hierarchy")
 
     env = SimpleNamespace(**param_dict)
     DriverAnalysisTemplateParameterSetup(env=env)
 
-    # Override driver_metrics with only the metrics from cpg_metric_groups
-    if cpg_peer_metrics:
-        requested_metric_lower = requested_metric.lower()
+    # Get cpg_metric_groups and filter driver_metrics
+    cpg_metric_groups = get_cpg_metric_groups()
 
-        # Create new driver_metrics with only the cpg group metrics
-        new_driver_metrics = [{
-            "metric": requested_metric_lower,
-            "parent_metric": None,
-            "peer_metrics": cpg_peer_metrics
-        }]
-
-        # Add entries for peer metrics
+    if cpg_metric_groups and requested_metric:
         original_driver_metrics = env.driver_analysis_parameters.get("driver_metrics", [])
-        for peer in cpg_peer_metrics:
-            peer_lower = peer.lower()
-            # Find this peer in original metrics to preserve parent_metric
-            for dm in original_driver_metrics:
-                if dm.get("metric", "").lower() == peer_lower:
-                    new_driver_metrics.append({
-                        "metric": peer_lower,
-                        "parent_metric": dm.get("parent_metric"),
-                        "peer_metrics": []
-                    })
-                    break
-            else:
-                new_driver_metrics.append({
-                    "metric": peer_lower,
-                    "parent_metric": None,
-                    "peer_metrics": []
-                })
-
-        env.driver_analysis_parameters["driver_metrics"] = new_driver_metrics
-        logger.info(f"Replaced driver_metrics with cpg group: {[dm['metric'] for dm in new_driver_metrics]}")
+        filtered_metrics = filter_driver_metrics_by_group(requested_metric, original_driver_metrics, cpg_metric_groups)
+        env.driver_analysis_parameters["driver_metrics"] = filtered_metrics
+    else:
+        logger.info(f"No cpg_metric_groups found - using default metric_hierarchy")
 
     env.da = DriverAnalysis.from_env(env=env)
 
