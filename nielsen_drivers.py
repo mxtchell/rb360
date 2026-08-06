@@ -20,14 +20,15 @@ logger = logging.getLogger(__name__)
 
 def get_cpg_metric_groups():
     """Get cpg_metric_groups from dataset misc_info."""
-    dataset_id = os.environ.get('DATASET_ID')
-    logger.info(f"DATASET_ID: {dataset_id}")
-    if not dataset_id:
-        logger.warning("No DATASET_ID found in environment")
-        return {}
-
     try:
         ar_utils = ArUtils()
+        dataset_id = ar_utils.sp.data.dataset_id
+        logger.info(f"Dataset ID from sp: {dataset_id}")
+
+        if not dataset_id:
+            logger.warning("No dataset_id found")
+            return {}
+
         dataset = ar_utils.ar_client.data.get_dataset(dataset_id)
         misc_info = json.loads(dataset.misc_info) if dataset.misc_info else {}
         cpg_groups = misc_info.get('cpg_metric_groups', {})
